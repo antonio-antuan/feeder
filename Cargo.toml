@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "feeder",
+    "http-collector",
+    "tg-collector",
+    "standalone-server"
+]

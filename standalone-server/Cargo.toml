@@ -1,0 +1,50 @@
+[package]
+name = "standalone-server"
+version = "0.1.0"
+authors = ["aCLr <a.ch.clr@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4"
+diesel = {version ="*", features = ["chrono", "postgres" ]}
+tokio = {version = "0.2", features = ["full"] }
+chrono = {version ="*", features = ["serde"]}
+tokio-diesel = "*"
+env_logger = "*"
+log = "*"
+futures = "*"
+tg-collector = {path = "../tg-collector"}
+
+actix-web-httpauth = "0.5.0"
+actix-service = "1.0.6"
+
+pbkdf2 = { version = "0.2" }
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+
+[dependencies.actix]
+version = "0.10.0"
+
+[dependencies.feeder]
+path = "../feeder"
+features = ["pg-storage"]
+
+[dependencies.actix-cors]
+version = "0.5.1"
+
+[dependencies.actix-rt]
+version = "1.1.1"
+
+[dependencies.derive_more]
+version = "0.99.11"
+
+[dependencies.actix-web]
+version = "3.2.0"
+
+[dependencies.config]
+version = "0.9"
+features = ["yaml"]

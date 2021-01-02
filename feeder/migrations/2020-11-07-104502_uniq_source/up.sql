@@ -1,0 +1,1 @@
+ALTER TABLE sources add constraint unique_origin_kind unique (origin, kind);
