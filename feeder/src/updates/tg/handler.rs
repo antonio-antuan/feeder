@@ -46,8 +46,6 @@ where
     pub async fn run(&mut self) {
         let mut guard = self.tg.write().await;
         guard.start().await;
-        // TODO handle join
-        let join_handle = guard.start();
         let recv = self.orig_receiver.clone();
         let sender = self.sender.clone();
         let parser = self.parser.clone();
@@ -72,6 +70,5 @@ where
                 }
             }
         });
-        join_handle.await
     }
 }

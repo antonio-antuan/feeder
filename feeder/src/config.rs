@@ -64,6 +64,7 @@ pub struct TelegramConfig {
     max_download_queue_size: usize,
     files_directory: String,
     log_download_state_secs_interval: u64,
+    encryption_key: String,
 }
 
 impl TelegramConfig {
@@ -75,6 +76,9 @@ impl TelegramConfig {
     }
     pub fn log_verbosity_level(&self) -> i32 {
         self.log_verbosity_level
+    }
+    pub fn encryption_key(&self) -> &str {
+        &self.encryption_key
     }
     pub fn api_id(&self) -> i64 {
         self.api_id
@@ -107,6 +111,7 @@ impl Default for TelegramConfig {
             phone: "".to_string(),
             max_download_queue_size: 1,
             files_directory: "".to_string(),
+            encryption_key: "".to_string(),
             log_download_state_secs_interval: 0,
         }
     }

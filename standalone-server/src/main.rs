@@ -36,6 +36,7 @@ async fn main() {
         .files_directory(SETTINGS.collectors.tg.files_directory.clone())
         .log_verbosity_level(SETTINGS.collectors.tg.log_verbosity_level)
         .max_download_queue_size(SETTINGS.collectors.tg.max_download_queue_size)
+        .encryption_key(SETTINGS.collectors.tg.encryption_key.clone())
         .phone(SETTINGS.collectors.tg.phone.clone())
         .api_hash(SETTINGS.collectors.tg.api_hash.clone())
         .log_download_state_secs_interval(SETTINGS.collectors.tg.log_download_state_secs_interval)

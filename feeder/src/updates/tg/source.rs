@@ -21,6 +21,7 @@ where
     api_id: i64,
     api_hash: String,
     phone_number: String,
+    encryption_key: String,
     log_verbosity_level: i32,
     database_directory: String,
     max_download_queue_size: usize,
@@ -52,6 +53,7 @@ where
             phone_number: phone_number.to_string(),
             api_hash: api_hash.to_string(),
             log_verbosity_level: 0,
+            encryption_key: "".to_string(),
             database_directory: "tdlib".to_string(),
             storage: None,
         }
@@ -87,6 +89,7 @@ where
             .with_api_id(self.api_id)
             .with_api_hash(self.api_hash)
             .with_log_download_state_secs_interval(self.log_download_state_secs_interval)
+            .with_encryption_key(self.encryption_key)
             .with_phone_number(self.phone_number)
             .with_max_download_queue_size(self.max_download_queue_size)
             .build()

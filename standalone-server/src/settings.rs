@@ -21,10 +21,6 @@ pub struct Mongo {
     pub database: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Logs {
-    pub mongo: Mongo,
-}
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
@@ -50,6 +46,7 @@ pub struct TgCollector {
     pub enabled: bool,
     pub database_directory: String,
     pub log_verbosity_level: i32,
+    pub encryption_key: String,
     pub api_id: i64,
     pub api_hash: String,
     pub phone: String,
@@ -77,7 +74,6 @@ pub struct Settings {
     pub logging: Logging,
     pub collectors: Collectors,
     pub server: Server,
-    pub logs: Logs,
 }
 
 impl Settings {

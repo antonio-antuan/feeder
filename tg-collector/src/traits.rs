@@ -3,16 +3,14 @@ use async_trait::async_trait;
 use dyn_clone::DynClone;
 use rust_tdlib::client::client::ClientState;
 use rust_tdlib::errors::RTDResult;
-use rust_tdlib::types::{
-    Chat, Chats, Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink,
-    GetSupergroup, GetSupergroupFullInfo, HttpUrl, JoinChat, Messages, Ok, SearchPublicChats,
-    Supergroup, SupergroupFullInfo,
-};
+use rust_tdlib::types::{Chat, Chats, Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup, GetSupergroupFullInfo, HttpUrl, JoinChat, Messages, Ok, SearchPublicChats, Supergroup, SupergroupFullInfo, TdType};
 use tokio::task::JoinHandle;
+use tokio::sync::mpsc;
 
 #[async_trait]
 pub trait TelegramClientTrait: DynClone + Send + Sync {
     async fn start(&mut self) -> Result<JoinHandle<ClientState>>;
+    fn set_updates_sender(&mut self, updates_sender: mpsc::Sender<TdType>) -> Result<()>;
 }
 
 dyn_clone::clone_trait_object!(TelegramClientTrait);

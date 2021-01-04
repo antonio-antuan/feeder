@@ -12,9 +12,8 @@ use rust_tdlib::types::{
     UpdateMessageContent, UpdateNewMessage,
 };
 use std::io;
-use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
+use std::sync::{Arc, Mutex};
 
-use crate::config::Config;
 use crate::result::{Error, Result};
 use crate::traits;
 use crate::types;
@@ -24,9 +23,23 @@ use rust_tdlib::client::{AuthStateHandler, ClientBuilder};
 use rust_tdlib::errors::RTDResult;
 use std::collections::VecDeque;
 use std::time::Duration;
-use tokio::sync::mpsc::Receiver;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task::JoinHandle;
+use tokio::sync::mpsc::Sender;
+
+
+#[derive(Debug)]
+pub struct Config<'a> {
+    pub max_download_queue_size: usize,
+    pub log_download_state_secs_interval: u64,
+    pub log_verbosity_level: i32,
+    pub encryption_key: &'a str,
+    pub database_directory: &'a str,
+    pub api_id: i64,
+    pub api_hash: &'a str,
+    pub phone_number: &'a str,
+}
+
 
 #[derive(Clone, Debug)]
 struct AuthHandler {
@@ -55,37 +68,37 @@ impl AuthHandler {
 impl AuthStateHandler for AuthHandler {
     async fn handle_other_device_confirmation(
         &self,
-        wait_device_confirmation: &AuthorizationStateWaitOtherDeviceConfirmation,
+        _: &AuthorizationStateWaitOtherDeviceConfirmation,
     ) {
         panic!("other device confirmation not supported")
     }
 
-    async fn handle_wait_code(&self, wait_code: &AuthorizationStateWaitCode) -> String {
+    async fn handle_wait_code(&self, _: &AuthorizationStateWaitCode) -> String {
         eprintln!("wait for auth code");
         AuthHandler::wait_input()
     }
 
     async fn handle_encryption_key(
         &self,
-        wait_encryption_key: &AuthorizationStateWaitEncryptionKey,
+        _: &AuthorizationStateWaitEncryptionKey,
     ) -> String {
         self.encryption_key.to_string()
     }
 
-    async fn handle_wait_password(&self, wait_password: &AuthorizationStateWaitPassword) -> String {
+    async fn handle_wait_password(&self, _: &AuthorizationStateWaitPassword) -> String {
         panic!("password not supported")
     }
 
     async fn handle_wait_phone_number(
         &self,
-        wait_phone_number: &AuthorizationStateWaitPhoneNumber,
+        _: &AuthorizationStateWaitPhoneNumber,
     ) -> String {
         self.phone_number.to_string()
     }
 
     async fn handle_wait_registration(
         &self,
-        wait_registration: &AuthorizationStateWaitRegistration,
+        _: &AuthorizationStateWaitRegistration,
     ) -> (String, String) {
         panic!("registration not supported")
     }
@@ -95,6 +108,10 @@ impl AuthStateHandler for AuthHandler {
 impl traits::TelegramClientTrait for Client<AuthHandler, RawApi> {
     async fn start(&mut self) -> Result<JoinHandle<ClientState>> {
         Ok(self.start().await?)
+    }
+
+    fn set_updates_sender(&mut self, updates_sender: Sender<TdType>) -> Result<()> {
+        Ok(self.set_updates_sender(updates_sender)?)
     }
 }
 
@@ -196,14 +213,6 @@ impl DownloadQueue {
     }
 }
 
-struct TdReceiver(mpsc::Receiver<TdType>);
-
-impl TdReceiver {
-    pub fn get_raw(self) -> mpsc::Receiver<TdType> {
-        self.0
-    }
-}
-
 #[derive(Debug)]
 pub struct TgClientBuilder {
     max_download_queue_size: usize,
@@ -214,7 +223,6 @@ pub struct TgClientBuilder {
     api_id: Option<i64>,
     api_hash: Option<String>,
     phone_number: Option<String>,
-    updates_channel: Option<mpsc::Sender<TgUpdate>>,
 }
 
 impl TgClientBuilder {
@@ -228,19 +236,14 @@ impl TgClientBuilder {
             api_id: None,
             api_hash: None,
             phone_number: None,
-            updates_channel: None,
         }
-    }
-
-    pub fn with_updates_channel(mut self, channel: mpsc::Sender<TgUpdate>) -> Self {
-        self.updates_channel = Some(channel);
-        self
     }
 
     pub fn with_max_download_queue_size(mut self, max_download_queue_size: usize) -> Self {
         self.max_download_queue_size = max_download_queue_size;
         self
     }
+
     pub fn with_log_download_state_secs_interval(
         mut self,
         log_download_state_secs_interval: u64,
@@ -248,26 +251,32 @@ impl TgClientBuilder {
         self.log_download_state_secs_interval = log_download_state_secs_interval;
         self
     }
+
     pub fn with_log_verbosity_level(mut self, log_verbosity_level: i32) -> Self {
         self.log_verbosity_level = log_verbosity_level;
         self
     }
+
     pub fn with_encryption_key(mut self, encryption_key: String) -> Self {
         self.encryption_key = Some(encryption_key);
         self
     }
+
     pub fn with_database_directory(mut self, database_directory: String) -> Self {
         self.database_directory = database_directory;
         self
     }
+
     pub fn with_api_id(mut self, api_id: i64) -> Self {
         self.api_id = Some(api_id);
         self
     }
+
     pub fn with_api_hash(mut self, api_hash: String) -> Self {
         self.api_hash = Some(api_hash);
         self
     }
+
     pub fn with_phone_number(mut self, phone_number: String) -> Self {
         self.phone_number = Some(phone_number);
         self
@@ -294,14 +303,8 @@ impl TgClientBuilder {
             Some(a) => a,
         };
 
-        let updates_channel = match self.updates_channel {
-            None => return Err(Error::Common("updates_channel not set".to_string())),
-            Some(u) => u,
-        };
-        let (s, r) = mpsc::channel::<TdType>(100);
         let cfg = Config {
             api_id,
-            updates_sender: &s,
             max_download_queue_size: self.max_download_queue_size,
             log_download_state_secs_interval: self.log_download_state_secs_interval,
             log_verbosity_level: self.log_verbosity_level,
@@ -310,9 +313,7 @@ impl TgClientBuilder {
             api_hash: api_hash.as_str(),
             phone_number: phone_number.as_str(),
         };
-        let cl = TgClient::new(&cfg);
-        cl.start_listen_updates(updates_channel, r)?;
-        Ok(cl)
+        Ok(TgClient::new(&cfg))
     }
 }
 
@@ -341,9 +342,8 @@ impl TgClient {
             .enable_storage_optimizer(true)
             .build();
 
-        let mut client = ClientBuilder::default()
+        let client = ClientBuilder::default()
             .with_auth_state_handler(AuthHandler::new(config.encryption_key, config.phone_number))
-            .with_updates_sender(config.updates_sender.clone())
             .with_tdlib_parameters(tdlib_parameters)
             .build()
             .unwrap();
@@ -362,7 +362,7 @@ impl TgClient {
                 }
             });
         }
-        let mut tg = TgClient {
+        let tg = TgClient {
             client: Box::new(client),
             api,
             download_queue,
@@ -370,25 +370,27 @@ impl TgClient {
         tg
     }
 
-    pub(self) fn start_listen_updates(
-        &self,
-        channel: mpsc::Sender<TgUpdate>,
-        mut receiver: mpsc::Receiver<TdType>,
+    pub fn start_listen_updates(
+        &mut self,
+        updates_sender: mpsc::Sender<TgUpdate>,
     ) -> Result<()> {
+        let (sx, mut rx) = mpsc::channel::<TdType>(100);
+        self.client.set_updates_sender(sx);
+
         let download_queue = self.download_queue.clone();
-        let mut channel = channel.clone();
         let api = self.api.clone();
+        let mut sender = updates_sender.clone();
 
         tokio::spawn(async move {
-            while let Some(message) = receiver.recv().await {
+            while let Some(message) = rx.recv().await {
                 match message {
                     TdType::UpdateNewMessage(new_message) => {
-                        if let Err(err) = channel.send(TgUpdate::NewMessage(new_message)).await {
+                        if let Err(err) = sender.send(TgUpdate::NewMessage(new_message)).await {
                             warn!("{}", err);
                         };
                     }
                     TdType::UpdateMessageContent(message_content) => {
-                        if let Err(err) = channel
+                        if let Err(err) = sender
                             .send(TgUpdate::MessageContent(message_content))
                             .await
                         {
@@ -396,12 +398,12 @@ impl TgClient {
                         };
                     }
                     TdType::UpdateChatPhoto(chat_photo) => {
-                        if let Err(err) = channel.send(TgUpdate::ChatPhoto(chat_photo)).await {
+                        if let Err(err) = sender.send(TgUpdate::ChatPhoto(chat_photo)).await {
                             warn!("{}", err)
                         };
                     }
                     TdType::UpdateChatTitle(chat_title) => {
-                        if let Err(err) = channel.send(TgUpdate::ChatTitle(chat_title)).await {
+                        if let Err(err) = sender.send(TgUpdate::ChatTitle(chat_title)).await {
                             warn!("{}", err)
                         };
                     }
@@ -429,7 +431,7 @@ impl TgClient {
                             {
                                 error!("{}", e);
                             }
-                            if let Err(err) = channel.send(TgUpdate::FileDownloaded(file)).await {
+                            if let Err(err) = sender.send(TgUpdate::FileDownloaded(file)).await {
                                 error!("{}", err);
                             };
                         }
@@ -630,14 +632,6 @@ fn make_download_file_request(file_id: i64) -> DownloadFile {
         .build()
 }
 
-fn type_in() -> String {
-    let mut input = String::new();
-    match io::stdin().read_line(&mut input) {
-        Ok(_) => input.trim().to_string(),
-        Err(e) => panic!("Can't get input value: {:?}", e),
-    }
-}
-
 #[derive(Debug)]
 pub enum TgUpdate {
     NewMessage(UpdateNewMessage),
@@ -653,8 +647,7 @@ pub enum TgUpdate {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Config;
-    use crate::tg_client::{get_update_file_handler, TgClient};
+    use crate::tg_client::{get_update_file_handler, TgClient, Config};
     use crate::traits;
     use async_trait::async_trait;
     use rust_tdlib::client::api::Api;
@@ -721,10 +714,11 @@ mod tests {
             max_download_queue_size: 1,
             log_download_state_secs_interval: 100,
             log_verbosity_level: 0,
-            database_directory: "".to_string(),
+            encryption_key: "",
+            database_directory: "",
             api_id: 0,
-            api_hash: "".to_string(),
-            phone_number: "".to_string(),
+            api_hash: "",
+            phone_number: "",
         });
         client.api = Box::new(MockedApi);
 

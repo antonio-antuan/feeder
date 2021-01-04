@@ -41,4 +41,8 @@ table! {
 joinable!(files -> records (record_id));
 joinable!(records -> sources (source_id));
 
-allow_tables_to_appear_in_same_query!(files, records, sources,);
+allow_tables_to_appear_in_same_query!(
+    files,
+    records,
+    sources,
+);
