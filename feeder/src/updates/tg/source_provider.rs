@@ -49,7 +49,13 @@ where
     }
 
     async fn synchronize(&self, secs_depth: i32) -> Result<()> {
-        let channels = self.collector.read().await.get_all_channels(1000).await?;
+        debug!("start syncing {:?}", self.get_source());
+        let channels = {
+
+            let cr = self.collector.read().await;
+            trace!("lock acquired");
+            cr.get_all_channels(1000).await?
+        };
 
         let until = SystemTime::now().duration_since(UNIX_EPOCH).unwrap()
             - Duration::new(secs_depth as u64, 0);

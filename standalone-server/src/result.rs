@@ -83,7 +83,7 @@ impl From<DBError> for ApiError {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
                     return ApiError::BadRequest(message);
                 };
-                error!("{:?}", error);
+                log::error!("{:?}", error);
                 ApiError::InternalServerError("Unknown database error".into())
             }
             DBError::NotFound => ApiError::NotFound("object not found".into()),

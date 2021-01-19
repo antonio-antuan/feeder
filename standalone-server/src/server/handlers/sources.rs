@@ -1,7 +1,7 @@
 use crate::db::{models::User, queries::sources as sources_queries, Pool};
 use crate::result::ApiError;
 use actix_web::web::{Data, Json, Path, Query};
-use feeder::aggregator::Aggregator;
+use feeder::aggregator::AggApp;
 use feeder::models::Source;
 use feeder::storage::pg::PgStorage;
 use serde::Deserialize;
@@ -18,7 +18,7 @@ pub struct SearchSource {
 }
 
 pub async fn search(
-    aggregator: Data<Arc<Aggregator<PgStorage, DefaultTelegramParser>>>,
+    aggregator: Data<Arc<AggApp<PgStorage, DefaultTelegramParser>>>,
     query: Query<SearchSource>,
 ) -> Result<Json<Vec<Source>>, ApiError> {
     let sources = aggregator.search_source(query.origin.as_str()).await?;

@@ -20,3 +20,4 @@ pub mod models;
 pub mod result;
 pub mod storage;
 mod updates;
+pub use updates::Source;

@@ -7,21 +7,22 @@ use crate::{config, updates};
 use std::sync::Arc;
 use tg_collector::parsers::TelegramDataParser;
 
-pub struct Aggregator<S, P>
+pub struct AggApp<S, P>
 where
     S: Storage + Send + Sync + Clone + 'static,
     P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
     handler: updates::SourcesAggregator<S, P>,
+    storage: S
 }
 
-impl<S, P> Aggregator<S, P>
+impl<S, P> AggApp<S, P>
 where
     S: Storage + Send + Sync + Clone + 'static,
     P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
-    pub fn new(handler: updates::SourcesAggregator<S, P>) -> Self {
-        Self { handler }
+    pub fn new(handler: updates::SourcesAggregator<S, P>, storage: S) -> Self {
+        Self { handler, storage }
     }
 
     pub async fn run(&self) {
@@ -35,24 +36,28 @@ where
     pub async fn synchronize(&self, secs_depth: i32, source: Option<Source>) -> Result<()> {
         self.handler.synchronize(secs_depth, source).await
     }
+
+    pub fn storage(&self) -> S {
+        self.storage.clone()
+    }
 }
 
-pub struct AggregatorBuilder<'a, S, P>
+pub struct AppBuilder<'a, S, P>
 where
     S: Storage + Send + Sync + Clone + 'static,
     P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
-    config: &'a config::AggregatorConfig,
+    config: &'a config::AppConfig,
     storage: S,
     telegram_parser: P,
 }
 
-impl<'a, S, P> AggregatorBuilder<'a, S, P>
+impl<'a, S, P> AppBuilder<'a, S, P>
 where
     S: Storage + Clone + Send + Sync + Clone + 'static,
     P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
-    pub fn new(config: &'a config::AggregatorConfig, storage: S, telegram_parser: P) -> Self {
+    pub fn new(config: &'a config::AppConfig, storage: S, telegram_parser: P) -> Self {
         Self {
             config,
             storage,
@@ -60,7 +65,7 @@ where
         }
     }
 
-    pub fn build(&self) -> Aggregator<S, P> {
+    pub fn build(self) -> AggApp<S, P> {
         debug!("config for building: {:?}", self.config);
         let mut updates_builder =
             updates::SourcesAggregator::builder().with_storage(self.storage.clone());
@@ -91,6 +96,6 @@ where
             let tg_source = Arc::new(tg_source);
             updates_builder = updates_builder.with_tg_source(tg_source);
         }
-        Aggregator::new(updates_builder.build())
+        AggApp::new(updates_builder.build(), self.storage.clone())
     }
 }

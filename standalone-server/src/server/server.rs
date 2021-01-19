@@ -6,13 +6,13 @@ use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{App, HttpServer};
-use feeder::aggregator::Aggregator;
+use feeder::aggregator::AggApp;
 use feeder::storage::pg::PgStorage;
 use std::sync::Arc;
 use tg_collector::parsers::DefaultTelegramParser;
 
-pub async fn server(
-    aggregator: Arc<Aggregator<PgStorage, DefaultTelegramParser>>,
+pub async fn run_server(
+    aggregator: Arc<AggApp<PgStorage, DefaultTelegramParser>>,
     db_pool: Pool,
 ) -> std::io::Result<()> {
     let server = HttpServer::new(move || {

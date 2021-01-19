@@ -97,7 +97,11 @@ where
         let source_providers = self.get_enabled_sources();
         let mut tasks = vec![];
         for provider in &source_providers {
-            tasks.push(provider.search_source(query))
+            tasks.push(async move {
+                let found = provider.search_source(query).await;
+                debug!("{:?} found {:?}", provider.get_source(), found);
+                found
+            })
         }
         let mut results = vec![];
         let tasks_results = join_all(tasks).await;

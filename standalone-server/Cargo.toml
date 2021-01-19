@@ -16,6 +16,7 @@ env_logger = "*"
 log = "*"
 futures = "*"
 tg-collector = {path = "../tg-collector"}
+clap = "2.3.33"
 
 actix-web-httpauth = "0.5.0"
 actix-service = "1.0.6"

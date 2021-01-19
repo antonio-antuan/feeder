@@ -35,6 +35,10 @@ impl PgStorage {
         embedded_migrations::run(&connection)?;
         Ok(())
     }
+
+    pub fn pool(&self) -> Pool {
+        self.pool.clone()
+    }
 }
 
 #[async_trait]

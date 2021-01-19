@@ -43,32 +43,37 @@ where
         }
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self) -> Result<()> {
         let mut guard = self.tg.write().await;
-        guard.start().await;
+        let handle = match guard.start().await {
+            Ok(h) => h,
+            Err(e) => return Err(e.into()),
+        };
         let recv = self.orig_receiver.clone();
         let sender = self.sender.clone();
         let parser = self.parser.clone();
         spawn(async move {
-            loop {
-                let update = recv.lock().await.recv().await;
-                match &update {
-                    None => return,
-                    Some(update) => {
-                        let parsed_update = match parser.parse_update(update).await {
-                            Ok(Some(update)) => Ok(SourceData::Telegram(update)),
-                            Err(e) => Err(Error::TgCollectorError(e)),
+            tokio::select! {
+                h = handle => info!("telegram client closed: {:?}", h),
+                _ = async {
+                    loop {
+                        while let Some(update) = recv.lock().await.recv().await {
+                            let parsed_update = match parser.parse_update(&update).await {
+                                Ok(Some(update)) => Ok(SourceData::Telegram(update)),
+                                Err(e) => Err(Error::TgCollectorError(e)),
 
-                            Ok(None) => continue,
+                                Ok(None) => continue,
+                            };
+                            let mut local_sender = sender.lock().await;
+
+                            if let Err(err) = local_sender.send(parsed_update).await {
+                                warn!("{}", err)
+                            }
                         };
-                        let mut local_sender = sender.lock().await;
-
-                        if let Err(err) = local_sender.send(parsed_update).await {
-                            warn!("{}", err)
-                        }
                     }
-                }
-            }
+                } => {info!("updates loop closed")}
+            };
         });
+        Ok(())
     }
 }

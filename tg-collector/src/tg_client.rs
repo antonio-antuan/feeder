@@ -434,6 +434,9 @@ impl TgClient {
                             if let Err(err) = sender.send(TgUpdate::FileDownloaded(file)).await {
                                 error!("{}", err);
                             };
+                        } else {
+                            let percent = file.file().local().downloaded_size() / (file.file().expected_size() / 100);
+                            debug!("file {} downloaded percent: {}", file.file().id(), percent);
                         }
                     }
                     _ => {}
@@ -443,8 +446,8 @@ impl TgClient {
         Ok(())
     }
 
-    pub async fn start(&mut self) {
-        self.client.start().await;
+    pub async fn start(&mut self) -> Result<JoinHandle<ClientState>> {
+        self.client.start().await
     }
 
     pub async fn get_chat(&self, chat_id: &i64) -> Result<Chat> {

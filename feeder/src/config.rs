@@ -1,11 +1,11 @@
 #[derive(Clone, Debug, Builder)]
 #[builder(default)]
-pub struct AggregatorConfig {
+pub struct AppConfig {
     http: HttpConfig,
     telegram: TelegramConfig,
 }
 
-impl AggregatorConfig {
+impl AppConfig {
     pub fn http(&self) -> &HttpConfig {
         &self.http
     }
@@ -15,7 +15,7 @@ impl AggregatorConfig {
     }
 }
 
-impl Default for AggregatorConfig {
+impl Default for AppConfig {
     fn default() -> Self {
         Self {
             http: HttpConfig::default(),
