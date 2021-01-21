@@ -43,19 +43,20 @@ pub async fn run() {
 
     let app = init::build_app();
 
-    // TODO: wait until start properly
-    tokio::time::delay_for(Duration::from_millis(300)).await;
-
+    // TODO: app (tg source) must start without background
     if matches.is_present("background") {
         let app_runner = app.clone();
         tokio::spawn(async move { app_runner.run().await });
     }
 
+    // TODO: wait until start properly
+    tokio::time::delay_for(Duration::from_millis(300)).await;
+
     match matches.subcommand() {
         ("migrate", _) => {
             app.storage().migrate().expect("migrations failed");
         }
-        ("run", _) => {
+        ("server", _) => {
             let pool = app.storage().pool();
             run_server(app, pool).await.expect("can't run server");
         }

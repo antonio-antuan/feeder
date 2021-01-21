@@ -81,3 +81,6 @@ pub async fn mark_record(
         records_queries::mark_record(&db_pool, user.id, record_id.0, params.starred).await?,
     ))
 }
+
+// TODO: retrieve comments for all records (if exists)
+// make requests inplace or store in db???

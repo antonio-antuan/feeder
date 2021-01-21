@@ -59,6 +59,7 @@ where
     }
 
     pub async fn synchronize(&self, secs_depth: i32, source: Option<Source>) -> Result<()> {
+        // TODO: wait all tg files downloaded
         let source_providers = self.get_enabled_sources();
         let mut tasks = vec![];
         match source {
