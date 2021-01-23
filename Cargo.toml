@@ -4,5 +4,6 @@ members = [
     "feeder",
     "http-collector",
     "tg-collector",
+    "vk-collector",
     "interface",
 ]
