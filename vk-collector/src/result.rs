@@ -1,13 +1,15 @@
+use crate::types::VkError;
 use std::fmt;
-use crate::types::{VkError, VkResponse};
-pub type Result<T, E = Error> = std::result::Result<T, E>;
 
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug, Clone)]
 pub enum Error {
     VkError(VkError),
     RequestTimeout,
-    Internal(String)
+    HttpError,
+    Internal(String),
+    ClosedChannel,
 }
 
 impl fmt::Display for Error {
@@ -23,5 +25,17 @@ impl From<reqwest::Error> for Error {
         } else {
             Error::Internal(err.to_string())
         }
+    }
+}
+
+impl From<tokio::sync::oneshot::error::RecvError> for Error {
+    fn from(_: tokio::sync::oneshot::error::RecvError) -> Self {
+        Error::ClosedChannel
+    }
+}
+
+impl<T> From<tokio::sync::mpsc::error::SendError<T>> for Error {
+    fn from(_: tokio::sync::mpsc::error::SendError<T>) -> Self {
+        Error::ClosedChannel
     }
 }
