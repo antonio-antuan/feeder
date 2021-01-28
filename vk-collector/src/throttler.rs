@@ -41,15 +41,15 @@ where
         let delayed = self.delayed.clone();
         let worker = self.worker.clone();
         tokio::spawn(async move {
-            let mut fo = FuturesUnordered::new();
+            let mut futures = FuturesUnordered::new();
             loop {
                 tokio::select! {
                     t = ticker.tick() => {
-                        while let Some(_) = fo.next().await {}
+                        while let Some(_) = futures.next().await {}
                         log::trace!("new tick: {:?}", t);
-                        let mut to_delay = batch_size_per_tick - fo.len();
+                        let mut to_delay = batch_size_per_tick - futures.len();
                         if to_delay <= 0 {
-                            log::trace!("no space in fo");
+                            log::trace!("no space in futures");
                             continue
                         } else {
                             let mut guard = delayed.lock().await;
@@ -60,7 +60,7 @@ where
                                 to_delay = guard.len();
                             }
                             log::trace!("delay {} new tasks", to_delay);
-                            fo.extend(guard.drain(0..to_delay).map(|j|worker.call(j)));
+                            futures.extend(guard.drain(0..to_delay).map(|j|worker.call(j)));
                         }
                     }
                 }

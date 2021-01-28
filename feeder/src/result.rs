@@ -4,6 +4,7 @@ use std::fmt;
 pub enum Error {
     DbError(String),
     HttpCollectorError(http_collector::result::Error),
+    VkCollectorError(vk_collector::result::Error),
     TgCollectorError(tg_collector::result::Error),
     UpdateNotSupported(String),
     SourceKindConflict(String),
@@ -33,6 +34,12 @@ impl From<tg_collector::result::Error> for Error {
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
         Self::IOError(err)
+    }
+}
+
+impl From<vk_collector::result::Error> for Error {
+    fn from(err: vk_collector::result::Error) -> Self {
+        Self::VkCollectorError(err)
     }
 }
 

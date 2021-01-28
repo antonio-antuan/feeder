@@ -24,6 +24,11 @@ pub trait Storage {
 
     async fn set_source_scraped_now(&self, source: models::Source) -> Result<()>;
     async fn search_source(&self, query: &str) -> Result<Vec<models::Source>>;
+    async fn get_exact_source(
+        &self,
+        kind: String,
+        origin: String,
+    ) -> Result<Option<models::Source>>;
     async fn get_sources_by_kind(&self, kind: String) -> Result<Vec<models::Source>>;
     async fn get_sources_by_kind_for_scrape(
         &self,

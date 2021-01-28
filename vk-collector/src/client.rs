@@ -1,5 +1,5 @@
 use crate::throttler::{Throttler, Worker};
-use crate::types::{Group, JobGroupSearch, JobWallGet, WallItem};
+use crate::types::{Group, JobGroupSearch, JobWallGet, WallItem, JobGroupsGetById, ItemsWithCountResponse, JobGroupsGet};
 use crate::{
     result,
     types::{Job, VkResponse},
@@ -44,20 +44,38 @@ impl VkClient {
         }
     }
 
+    pub async fn get_my_groups(
+        &self,
+        offset: u32,
+        count: u16
+    ) -> result::Result<Vec<Group>> {
+        let (job, res) = JobGroupsGet::create(None, None, offset, count);
+        self.jobs_sender.send(Job::GroupsGet(job)).await?;
+        res.await?
+    }
+
+    pub async fn get_groups_by_ids(
+        &self,
+        group_ids: Vec<String>,
+    ) -> result::Result<Vec<Group>> {
+        let (job, res) = JobGroupsGetById::create(group_ids.join(","), None);
+        self.jobs_sender.send(Job::GroupsGetById(job)).await?;
+        res.await?
+    }
+
     pub async fn get_wall(
-        &mut self,
+        &self,
         owner_id: i64,
         offset: u8,
         limit: u8,
-    ) -> result::Result<Vec<WallItem>>
-where {
+    ) -> result::Result<Vec<WallItem>> {
         let (job, res) = JobWallGet::create(owner_id, offset, limit);
         self.jobs_sender.send(Job::WallGet(job)).await?;
         res.await?
     }
 
     pub async fn search_group(
-        &mut self,
+        &self,
         q: &str,
         offset: u8,
         limit: u8,
@@ -88,8 +106,10 @@ impl JobsWorker {
 impl Worker<Job> for Arc<JobsWorker> {
     async fn call(&self, job: Job) {
         let params = match &job {
-            Job::WallGet(wall_get) => wall_get.get_parameters(),
-            Job::GroupSearch(group_search) => group_search.get_parameters(),
+            Job::WallGet(j) => j.get_parameters(),
+            Job::GroupSearch(j) => j.get_parameters(),
+            Job::GroupsGetById(j) => j.get_parameters(),
+            Job::GroupsGet(j) => j.get_parameters(),
         };
         let url = format!(
             "{base_url}/method/{method}/?\
@@ -103,13 +123,17 @@ impl Worker<Job> for Arc<JobsWorker> {
         );
 
         match job {
-            Job::WallGet(wg) => {
-                let r = http_call_with_retry(&self.client, url.as_str(), self.max_tries).await;
-                wg.set_result(r)
+            Job::WallGet(j) => {
+                j.set_result(http_call_with_retry(&self.client, url.as_str(), self.max_tries).await)
             }
-            Job::GroupSearch(gs) => {
-                let r = http_call_with_retry(&self.client, url.as_str(), self.max_tries).await;
-                gs.set_result(r)
+            Job::GroupSearch(j) => {
+                j.set_result(http_call_with_retry(&self.client, url.as_str(), self.max_tries).await)
+            }
+            Job::GroupsGetById(j) => {
+                j.set_result(http_call_with_retry(&self.client, url.as_str(), self.max_tries).await)
+            }
+            Job::GroupsGet(j) => {
+                j.set_result(http_call_with_retry(&self.client, url.as_str(), self.max_tries).await)
             }
         };
     }
@@ -149,7 +173,8 @@ where
     let res = match res {
         Ok(vk_response) => match vk_response {
             VkResponse::Error(vk_err) => Err(result::Error::VkError(vk_err)),
-            VkResponse::Response(vk_resp) => Ok(vk_resp.items),
+            VkResponse::ResponseWithCount(vk_resp) => Ok(vk_resp.items),
+            VkResponse::ResponseArray(vk_resp) => Ok(vk_resp),
         },
         Err(err) => Err(err),
     };

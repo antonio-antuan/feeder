@@ -10,17 +10,20 @@ use tokio::sync::{mpsc, Mutex};
 
 pub mod http;
 pub mod tg;
+pub mod vk;
 
 #[derive(Debug)]
 pub enum SourceData {
     WebFeed(http::FeedUpdate),
     Telegram(tg::TelegramUpdate),
+    Vk(vk::VkUpdate),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Source {
     Web,
     Telegram,
+    Vk,
 }
 
 #[async_trait]
@@ -46,6 +49,7 @@ where
 {
     http_source: Option<Arc<http::HttpSource<S>>>,
     tg_source: Option<Arc<tg::TelegramSource<S, P>>>,
+    vk_source: Option<Arc<vk::VkSource<S>>>,
     updates_sender: Arc<Mutex<Sender<Result<SourceData>>>>,
     updates_receiver: Mutex<Receiver<Result<SourceData>>>,
     storage: S,
@@ -132,6 +136,7 @@ where
         }
         push_if_enabled!(self.http_source);
         push_if_enabled!(self.tg_source);
+        push_if_enabled!(self.vk_source);
         enabled
     }
 
@@ -152,6 +157,8 @@ where
         log::debug!("tg started");
         run_source!(self.http_source);
         log::debug!("http started");
+        run_source!(self.vk_source);
+        log::debug!("vk started");
         self.process_updates().await;
     }
 
@@ -174,6 +181,13 @@ where
                                 Ok(0)
                             }
                             Some(source) => source.process_updates(telegram_update).await,
+                        },
+                        SourceData::Vk(vk_update) => match &self.vk_source {
+                            None => {
+                                debug!("vk source disabled");
+                                Ok(0)
+                            }
+                            Some(source) => source.process_updates(vk_update).await,
                         },
                     },
                     Err(err) => Err(Error::DbError(err.to_string())),
@@ -199,6 +213,7 @@ where
 {
     http_source: Option<Arc<http::HttpSource<S>>>,
     tg_source: Option<Arc<tg::TelegramSource<S, P>>>,
+    vk_source: Option<Arc<vk::VkSource<S>>>,
     storage: Option<S>,
 }
 
@@ -211,6 +226,7 @@ where
         Self {
             http_source: None,
             tg_source: None,
+            vk_source: None,
             storage: None,
         }
     }
@@ -235,6 +251,11 @@ where
         self
     }
 
+    pub fn with_vk_source(mut self, vk_source: Arc<vk::VkSource<S>>) -> Self {
+        self.vk_source = Some(vk_source);
+        self
+    }
+
     pub fn build(self) -> SourcesAggregator<S, P> {
         if self.storage.is_none() {
             panic!("storage not passed");
@@ -245,6 +266,7 @@ where
         SourcesAggregator {
             http_source: self.http_source,
             tg_source: self.tg_source,
+            vk_source: self.vk_source,
             storage: self.storage.unwrap(),
             updates_sender,
             updates_receiver,

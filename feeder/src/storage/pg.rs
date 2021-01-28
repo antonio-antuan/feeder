@@ -233,6 +233,27 @@ impl Storage for PgStorage {
         }
     }
 
+    async fn get_exact_source(
+        &self,
+        kind: String,
+        origin: String,
+    ) -> Result<Option<models::Source>, Error> {
+        let source = sources::table
+            .filter(sources::origin.eq(origin).and(sources::kind.eq(kind)))
+            .get_result_async::<models::Source>(&self.pool)
+            .await;
+        match source {
+            Err(te) => match &te {
+                tokio_diesel::AsyncError::Error(de) => match de {
+                    diesel::NotFound => Ok(None),
+                    _ => Err(te.into()),
+                },
+                _ => Err(te.into()),
+            },
+            Ok(s) => Ok(s),
+        }
+    }
+
     async fn get_sources_by_kind(&self, kind: String) -> Result<Vec<models::Source>> {
         Ok(sources::table
             .filter(sources::kind.eq(kind))
