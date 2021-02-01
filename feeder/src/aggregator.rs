@@ -96,6 +96,17 @@ where
             let tg_source = Arc::new(tg_source);
             updates_builder = updates_builder.with_tg_source(tg_source);
         }
+
+        if self.config.vk().enabled() {
+            let vk_source = updates::vk::VkSource::builder()
+                .with_storage(self.storage.clone())
+                .with_scrape_source_secs_interval(self.config.vk().scrape_source_secs_interval())
+                .with_sleep_secs(self.config.vk().sleep_secs())
+                .with_token(self.config.vk().token().to_string())
+                .build();
+            let vk_source = Arc::new(vk_source);
+            updates_builder = updates_builder.with_vk_source(vk_source);
+        }
         AggApp::new(updates_builder.build(), self.storage.clone())
     }
 }

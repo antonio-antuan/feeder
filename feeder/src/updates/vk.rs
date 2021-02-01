@@ -10,6 +10,7 @@ use crate::storage::Storage;
 use crate::updates::Source;
 use chrono::NaiveDateTime;
 use futures::future::join_all;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::{mpsc, Mutex};
@@ -26,6 +27,88 @@ where
     scrape_source_secs_interval: i32,
     client: Arc<VkClient>,
     storage: S,
+}
+
+impl<S> VkSource<S>
+where
+    S: Storage + Send + Sync + Clone + 'static,
+{
+    pub fn builder() -> VkSourceBuilder<S> {
+        VkSourceBuilder::new()
+    }
+}
+
+pub struct VkSourceBuilder<S>
+where
+    S: Storage + Send + Sync + Clone + 'static,
+{
+    sleep_secs: u64,
+    scrape_source_secs_interval: i32,
+    storage: Option<S>,
+    token: Option<String>,
+    // TODO: specify http client
+}
+
+impl<S> Default for VkSourceBuilder<S>
+where
+    S: Storage + Send + Sync + Clone + 'static,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+impl<S> VkSourceBuilder<S>
+where
+    S: Storage + Send + Sync + Clone + 'static,
+{
+    pub fn new() -> Self {
+        Self {
+            sleep_secs: 60,
+            scrape_source_secs_interval: 60,
+            storage: None,
+            token: None,
+        }
+    }
+
+    pub fn with_sleep_secs(mut self, sleep_secs: u64) -> Self {
+        self.sleep_secs = sleep_secs;
+        self
+    }
+
+    pub fn with_scrape_source_secs_interval(mut self, scrape_source_secs_interval: i32) -> Self {
+        self.scrape_source_secs_interval = scrape_source_secs_interval;
+        self
+    }
+
+    pub fn with_storage(mut self, storage: S) -> Self {
+        self.storage = Some(storage);
+        self
+    }
+
+    pub fn with_token(mut self, token: String) -> Self {
+        self.token = Some(token);
+        self
+    }
+
+    pub fn build(self) -> VkSource<S> {
+        if self.storage.is_none() {
+            panic!("storage not specified")
+        }
+        if self.token.is_none() {
+            panic!("vk token not specified")
+        }
+        VkSource {
+            sleep_secs: self.sleep_secs,
+            scrape_source_secs_interval: self.scrape_source_secs_interval,
+            client: Arc::new(VkClient::new(
+                self.token.unwrap().as_str(),
+                reqwest::Client::new(),
+                3,
+                1,
+            )),
+            storage: self.storage.unwrap(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -142,7 +225,34 @@ where
     }
 
     async fn synchronize(&self, secs_depth: i32) -> Result<()> {
-        unimplemented!()
+        debug!("start syncing {:?}", self.get_source());
+        let groups = self.client.get_my_groups(0, 1000).await?;
+        let group_to_source: HashMap<i64, i32> = self
+            .storage
+            .save_sources(groups.iter().map(models::NewSource::from).collect())
+            .await?
+            .into_iter()
+            .map(|s| (s.origin.parse().unwrap(), s.id))
+            .collect();
+        for group in groups {
+            let wall_items = self.client.get_wall(group.id(), 0, 100).await?;
+            self.storage
+                .save_records(
+                    wall_items
+                        .into_iter()
+                        .map(|wall| models::NewRecord {
+                            title: None,
+                            source_record_id: wall.id().to_string(),
+                            source_id: *group_to_source.get(&wall.owner_id()).unwrap(),
+                            content: wall.text().to_string(),
+                            date: Some(NaiveDateTime::from_timestamp(wall.date(), 0)),
+                            image: None,
+                        })
+                        .collect(),
+                )
+                .await?;
+        }
+        Ok(())
     }
 }
 
@@ -180,6 +290,18 @@ impl From<Group> for crate::models::NewSource {
     }
 }
 
+impl From<&Group> for crate::models::NewSource {
+    fn from(group: &Group) -> crate::models::NewSource {
+        crate::models::NewSource {
+            name: group.name().to_string(),
+            origin: group.id().to_string(),
+            kind: VK.to_string(),
+            image: None,
+            external_link: group.screen_name().to_string(),
+        }
+    }
+}
+
 // TODO: generic generator
 async fn sources_gen<S: Storage>(
     storage: S,
@@ -200,7 +322,7 @@ async fn sources_gen<S: Storage>(
         };
 
         debug!("send sources delayed for {:?}", sleep_period);
-        tokio::time::delay_for(sleep_period).await;
+        tokio::time::sleep(sleep_period).await;
     }
 }
 

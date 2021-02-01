@@ -38,9 +38,17 @@ fn init_app_config() -> config::AppConfig {
         .api_id(settings::SETTINGS.collectors.tg.api_id)
         .build()
         .expect("can't create telegram collector config");
+    let vk_config = config::VkConfigBuilder::default()
+        .enabled(settings::SETTINGS.collectors.vk.enabled)
+        .token(settings::SETTINGS.collectors.vk.token.clone())
+        .sleep_secs(settings::SETTINGS.collectors.vk.sleep_secs)
+        .scrape_source_secs_interval(settings::SETTINGS.collectors.vk.scrape_source_secs_interval)
+        .build()
+        .expect("can't create vk collector config");
     config::AppConfigBuilder::default()
         .http(http_config)
         .telegram(tg_config)
+        .vk(vk_config)
         .build()
         .expect("can't create collector config")
 }

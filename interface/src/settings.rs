@@ -44,9 +44,18 @@ pub struct TgCollector {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct VkCollector {
+    pub enabled: bool,
+    pub sleep_secs: u64,
+    pub scrape_source_secs_interval: i32,
+    pub token: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Collectors {
     pub http: HttpCollector,
     pub tg: TgCollector,
+    pub vk: VkCollector,
 }
 
 #[derive(Debug, Deserialize)]

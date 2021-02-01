@@ -1,0 +1,23 @@
+[package]
+name = "vk-collector"
+version = "0.1.0"
+authors = ["aCLr <a.ch.clr@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1.2"
+serde_json = "1.0.61"
+log = "0.4"
+reqwest = { version = "0.11", features = ["json"]}
+async-trait = "0.1.41"
+futures = "0.3.12"
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+
+[dev-dependencies]
+simple_logger = "1.3"

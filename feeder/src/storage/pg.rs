@@ -250,7 +250,7 @@ impl Storage for PgStorage {
                 },
                 _ => Err(te.into()),
             },
-            Ok(s) => Ok(s),
+            Ok(s) => Ok(Some(s)),
         }
     }
 

@@ -3,6 +3,7 @@
 pub struct AppConfig {
     http: HttpConfig,
     telegram: TelegramConfig,
+    vk: VkConfig,
 }
 
 impl AppConfig {
@@ -13,6 +14,10 @@ impl AppConfig {
     pub fn telegram(&self) -> &TelegramConfig {
         &self.telegram
     }
+
+    pub fn vk(&self) -> &VkConfig {
+        &self.vk
+    }
 }
 
 impl Default for AppConfig {
@@ -20,7 +25,31 @@ impl Default for AppConfig {
         Self {
             http: HttpConfig::default(),
             telegram: TelegramConfig::default(),
+            vk: VkConfig::default(),
         }
+    }
+}
+
+#[derive(Clone, Debug, Builder)]
+pub struct VkConfig {
+    enabled: bool,
+    sleep_secs: u64,
+    scrape_source_secs_interval: i32,
+    token: String,
+}
+
+impl VkConfig {
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+    pub fn sleep_secs(&self) -> u64 {
+        self.sleep_secs
+    }
+    pub fn scrape_source_secs_interval(&self) -> i32 {
+        self.scrape_source_secs_interval
+    }
+    pub fn token(&self) -> &str {
+        &self.token
     }
 }
 
@@ -40,6 +69,17 @@ impl HttpConfig {
     }
     pub fn scrape_source_secs_interval(&self) -> i32 {
         self.scrape_source_secs_interval
+    }
+}
+
+impl Default for VkConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            sleep_secs: 60,
+            scrape_source_secs_interval: 60,
+            token: "".to_string(),
+        }
     }
 }
 
