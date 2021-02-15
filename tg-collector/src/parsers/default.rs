@@ -3,7 +3,7 @@ use crate::result::{Error, Result};
 use crate::tg_client::TgUpdate;
 use crate::types::*;
 use async_trait::async_trait;
-use rust_tdlib::types::{FormattedText, MessageContent, RObject, TextEntity, TextEntityType};
+use rust_tdlib::types::{FormattedText, MessageContent, TextEntity, TextEntityType};
 
 #[derive(Clone, Debug)]
 pub struct DefaultTelegramParser;
@@ -65,10 +65,10 @@ impl TelegramDataParser for DefaultTelegramParser {
                 }
             }
             TgUpdate::ChatPhoto(photo) => {
-                return Err(Error::UpdateNotSupported(photo.td_name().to_string()))
+                return Err(Error::UpdateNotSupported("photo".to_string()))
             }
             TgUpdate::ChatTitle(title) => {
-                return Err(Error::UpdateNotSupported(title.td_name().to_string()))
+                return Err(Error::UpdateNotSupported("chat_title".to_string()))
             }
         })
     }
@@ -143,53 +143,53 @@ impl TelegramDataParser for DefaultTelegramParser {
             }
 
             MessageContent::MessageChatChangePhoto(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("message_chat_change_photo".to_string()))
             }
 
             MessageContent::MessagePoll(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("message_poll".to_string()))
             }
             MessageContent::MessageChatChangeTitle(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("message_chat_change_title".to_string()))
             }
             MessageContent::MessageChatDeletePhoto(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageChatJoinByLink(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageChatUpgradeFrom(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageChatUpgradeTo(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageContact(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageContactRegistered(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageCustomServiceAction(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageExpiredPhoto(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageExpiredVideo(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageInvoice(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageLocation(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessagePassportDataReceived(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageScreenshotTaken(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageSticker(message_sticker) => {
                 let file = TelegramFileWithMeta {
@@ -200,11 +200,11 @@ impl TelegramDataParser for DefaultTelegramParser {
                 Ok((None, Some(vec![file])))
             }
             MessageContent::MessageSupergroupChatCreate(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
 
             MessageContent::MessageVenue(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
 
             MessageContent::MessageVideoNote(message_video_note) => {
@@ -216,10 +216,10 @@ impl TelegramDataParser for DefaultTelegramParser {
                 Ok((None, Some(vec![file])))
             }
             MessageContent::MessageVoiceNote(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
             MessageContent::MessageWebsiteConnected(u) => {
-                Err(Error::UpdateNotSupported(u.td_name().to_string()))
+                Err(Error::UpdateNotSupported("foo".to_string()))
             }
 
             MessageContent::_Default(_) => Ok((None, None)),
