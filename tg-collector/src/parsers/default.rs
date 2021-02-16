@@ -222,7 +222,7 @@ impl TelegramDataParser for DefaultTelegramParser {
                 Err(Error::UpdateNotSupported("foo".to_string()))
             }
 
-            MessageContent::_Default(_) => Ok((None, None)),
+            MessageContent::_Default => Ok((None, None)),
             MessageContent::MessageBasicGroupChatCreate(_) => Ok((None, None)),
             MessageContent::MessageCall(_) => Ok((None, None)),
             MessageContent::MessageChatAddMembers(_) => Ok((None, None)),
@@ -235,6 +235,8 @@ impl TelegramDataParser for DefaultTelegramParser {
             MessageContent::MessagePaymentSuccessfulBot(_) => Ok((None, None)),
             MessageContent::MessagePinMessage(_) => Ok((None, None)),
             MessageContent::MessageUnsupported(_) => Ok((None, None)),
+            MessageContent::MessageDice(_) => {Ok((None, None))}
+            MessageContent::MessageProximityAlertTriggered(_) => {Ok((None, None))}
         }
     }
 
@@ -294,13 +296,14 @@ fn make_entities_stack(entities: &[TextEntity]) -> Vec<(usize, String)> {
             }
             TextEntityType::Underline(_) => Some(("<u>".to_string(), "</u>".to_string())),
             TextEntityType::Url(_) => Some(("<a>".to_string(), "</a>".to_string())),
-            TextEntityType::_Default(_) => None,
+            TextEntityType::_Default => None,
             // TextEntityType::BankCardNumber(_) => None,
             TextEntityType::BotCommand(_) => None,
             TextEntityType::Cashtag(_) => None,
             TextEntityType::EmailAddress(_) => None,
             TextEntityType::Mention(_) => None,
             TextEntityType::MentionName(_) => None,
+            TextEntityType::BankCardNumber(_) => None,
         };
         if let Some((start_tag, end_tag)) = formatting {
             stack.push((entity.offset() as usize, start_tag));

@@ -2,16 +2,9 @@
 use async_trait::async_trait;
 use rust_tdlib::client::tdlib_client::TdJson;
 use rust_tdlib::client::Worker;
+use rust_tdlib::tdjson::set_log_verbosity_level;
 use rust_tdlib::client::client::{Client, ClientState};
-use rust_tdlib::types::{
-    AuthorizationStateWaitCode, AuthorizationStateWaitEncryptionKey,
-    AuthorizationStateWaitOtherDeviceConfirmation, AuthorizationStateWaitPassword,
-    AuthorizationStateWaitPhoneNumber, AuthorizationStateWaitRegistration, Chat, ChatType, Chats,
-    Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup,
-    GetSupergroupFullInfo, MessageLink, JoinChat, Message, Messages, Ok, SearchPublicChats, Supergroup,
-    SupergroupFullInfo, Update, TdlibParameters, UpdateChatPhoto, UpdateChatTitle, UpdateFile,
-    UpdateMessageContent, UpdateNewMessage,
-};
+use rust_tdlib::types::{AuthorizationStateWaitCode, AuthorizationStateWaitEncryptionKey, AuthorizationStateWaitOtherDeviceConfirmation, AuthorizationStateWaitPassword, AuthorizationStateWaitPhoneNumber, AuthorizationStateWaitRegistration, Chat, ChatType, Chats, Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup, GetSupergroupFullInfo, MessageLink, JoinChat, Message, Messages, Ok, SearchPublicChats, Supergroup, SupergroupFullInfo, Update, TdlibParameters, UpdateChatPhoto, UpdateChatTitle, UpdateFile, UpdateMessageContent, UpdateNewMessage, ChatList, ChatListMain};
 use std::io;
 use std::sync::{Arc, Mutex};
 
@@ -27,6 +20,7 @@ use std::time::Duration;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task::JoinHandle;
 use tokio::sync::mpsc::Sender;
+use crate::traits::TelegramClientTrait;
 
 
 #[derive(Debug)]
@@ -320,7 +314,7 @@ impl TgClientBuilder {
 
 #[derive(Clone)]
 pub struct TgClient {
-    client: Box<dyn traits::TelegramAsyncApi>,
+    client: Client<TdJson>,
     worker: Worker<AuthHandler, TdJson>,
     download_queue: Arc<Mutex<DownloadQueue>>,
 }
@@ -330,7 +324,7 @@ impl TgClient {
         TgClientBuilder::new()
     }
 
-    pub(self) async fn new<'a>(config: &'a Config) -> Self {
+    pub(self) fn new(config: &Config) -> Self {
         let tdlib_parameters = TdlibParameters::builder()
             .database_directory(&config.database_directory)
             .use_test_dc(false)
@@ -345,12 +339,10 @@ impl TgClient {
         let mut worker = Worker::builder().with_auth_state_handler(
             AuthHandler::new(config.encryption_key, config.phone_number)
         ).build().unwrap();
-        worker.start();
         let client = Client::builder()
             .with_tdlib_parameters(tdlib_parameters)
             .build()
             .unwrap();
-        let (h, client) = worker.auth_client(client).await.unwrap();
         let download_queue = Arc::new(Mutex::new(DownloadQueue::new(
             config.max_download_queue_size,
         )));
@@ -366,14 +358,14 @@ impl TgClient {
             });
         }
         let tg = TgClient {
-            client: Box::new(client),
+            client,
             worker,
             download_queue,
         };
         tg
     }
 
-    pub fn start_listen_updates(
+    pub async fn start_listen_updates(
         &mut self,
         updates_sender: mpsc::Sender<TgUpdate>,
     ) -> Result<()> {
@@ -382,7 +374,7 @@ impl TgClient {
 
         let download_queue = self.download_queue.clone();
         let api = self.client.clone();
-        let mut sender = updates_sender.clone();
+        let sender = updates_sender.clone();
 
         tokio::spawn(async move {
             while let Some(message) = rx.recv().await {
@@ -450,7 +442,12 @@ impl TgClient {
     }
 
     pub async fn start(&mut self) -> Result<JoinHandle<ClientState>> {
-        Ok(tokio::spawn(async move {ClientState::Opened}))
+        set_log_verbosity_level(1);
+        let h = self.worker.start();
+        let (_, cl) = self.worker.auth_client(self.client.to_owned()).await?;
+        self.client = cl;
+        Ok(h)
+
     }
 
     pub async fn get_chat(&self, chat_id: &i64) -> Result<Chat> {
