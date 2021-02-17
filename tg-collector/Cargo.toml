@@ -9,9 +9,7 @@ edition = "2018"
 [dependencies]
 tokio = {version = "1", features = ["full"]}
 
-#rust-tdlib = { version = "0.1.2" }
-#rust-tdlib = { git = "https://github.com/aCLr/rust-tdlib.git", branch = "1.7.0"}
-rust-tdlib = { path = "/home/anton/Projects/rust-tdlib" }
+rust-tdlib = { version = "0.2.0" }
 futures = "0.3.7"
 futures-util = "0.3.7"
 
