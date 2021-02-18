@@ -7,13 +7,14 @@ use crate::updates::{Source, SourceData, SourceProvider};
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tg_collector::parsers::TelegramDataParser;
 use tg_collector::tg_client::TgClient;
-use tokio::stream::StreamExt;
 use tokio::sync::{mpsc, Mutex};
 use std::convert::TryInto;
+use tokio_stream::StreamExt;
 
 #[async_trait]
 impl<S, P> SourceProvider for TelegramSource<S, P>
@@ -25,10 +26,14 @@ where
         Source::Telegram
     }
 
-    async fn run(&self, updates_sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>) {
+    async fn run(
+        &self,
+        updates_sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>,
+    ) -> Result<()> {
         let mut tg_handler =
             Handler::new(updates_sender, self.collector.clone(), self.parser.clone());
-        tg_handler.run().await;
+        tg_handler.run().await?;
+        Ok(())
     }
 
     async fn search_source(&self, query: &str) -> Result<Vec<models::Source>> {
@@ -52,14 +57,13 @@ where
     async fn synchronize(&self, secs_depth: i32) -> Result<()> {
         debug!("start syncing {:?}", self.get_source());
         let channels = {
-
             let cr = self.collector.read().await;
             trace!("lock acquired");
             cr.get_all_channels(1000).await?
         };
 
         let until = SystemTime::now().duration_since(UNIX_EPOCH).unwrap()
-            - Duration::new(secs_depth as u64, 0);
+            - Duration::new(secs_depth.try_into().unwrap(), 0);
 
         debug!("got {} channels to sync", channels.len());
 

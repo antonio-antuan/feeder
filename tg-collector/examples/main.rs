@@ -1,9 +1,8 @@
-use log;
 use std::sync::Arc;
 
 use chrono::{NaiveDate, NaiveDateTime};
 use futures::stream::StreamExt;
-use tg_collector::tg_client::{TgClient, TgUpdate, Config};
+use tg_collector::tg_client::{TgClient, TgUpdate};
 use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::task::spawn;
 
@@ -33,10 +32,11 @@ async fn main() {
             println!("{:?}", update);
         }
     });
+
     let mut history_cursor = Box::pin(TgClient::get_chat_history_stream(
         Arc::new(RwLock::new(client)),
         all_chats.pop().unwrap().chat_id,
-        NaiveDate::from_ymd(2021, 2, 15).and_hms(0, 0, 0).timestamp() as i32,
+        NaiveDate::from_ymd(2021, 2, 17).and_hms(0, 0, 0).timestamp() as i32,
     ));
     while let Some(message) = history_cursor.next().await {
         println!(

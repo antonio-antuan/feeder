@@ -13,7 +13,7 @@ where
     P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
     handler: updates::SourcesAggregator<S, P>,
-    storage: S
+    storage: S,
 }
 
 impl<S, P> AggApp<S, P>

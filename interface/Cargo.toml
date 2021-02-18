@@ -13,7 +13,7 @@ default = []
 [dependencies]
 lazy_static = "1.4"
 diesel = {version ="*", features = ["chrono", "postgres" ]}
-tokio = {version = "0.2", features = ["full"] }
+tokio = {version = "1", features = ["full"] }
 chrono = {version ="*", features = ["serde"]}
 tokio-diesel = "*"
 env_logger = "*"
@@ -53,7 +53,7 @@ optional = true
 version = "0.99.11"
 
 [dependencies.actix-web]
-version = "3.2.0"
+version = "4.0.0-beta.3"
 optional = true
 
 [dependencies.config]

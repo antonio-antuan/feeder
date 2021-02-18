@@ -64,7 +64,7 @@ impl ResultsHandler for Handler {
             Ok((updates, _, _)) => Ok(SourceData::WebFeed(FeedUpdate::from(updates.clone()))),
             Err(err) => Err(Error::HttpCollectorError(err)),
         };
-        let mut local = self.sender.lock().await;
+        let local = self.sender.lock().await;
         if local.send(update).await.is_err() {
             error!("updates receiver dropped");
             return;
@@ -246,7 +246,10 @@ where
         Ok(())
     }
 
-    async fn run(&self, updates_sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>) {
+    async fn run(
+        &self,
+        updates_sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>,
+    ) -> Result<()> {
         let (sources_sender, sources_receiver) = mpsc::channel(2000);
         let sleep_secs = self.sleep_secs;
         let scrape_source_secs_interval = self.scrape_source_secs_interval;
@@ -257,6 +260,7 @@ where
         let http_handler = Handler::new(updates_sender);
         let http_runner = self.collector.clone();
         tokio::spawn(async move { http_runner.run(sources_receiver, &http_handler).await });
+        Ok(())
     }
 
     async fn search_source(&self, query: &str) -> Result<Vec<models::Source>> {
@@ -298,7 +302,7 @@ async fn sources_gen<S: Storage>(
     storage: S,
     source_check_period: i32,
     sleep_period: u64,
-    mut sender: mpsc::Sender<Vec<(Option<FeedKind>, String)>>,
+    sender: mpsc::Sender<Vec<(Option<FeedKind>, String)>>,
 ) {
     let sleep_period = Duration::from_secs(sleep_period);
     loop {
@@ -313,7 +317,7 @@ async fn sources_gen<S: Storage>(
         };
 
         debug!("send sources delayed for {:?}", sleep_period);
-        tokio::time::delay_for(sleep_period).await;
+        tokio::time::sleep(sleep_period).await;
     }
 }
 

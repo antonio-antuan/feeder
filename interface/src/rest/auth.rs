@@ -37,14 +37,12 @@ impl FromRequest for User {
 #[derive(Default)]
 pub struct Authorization;
 
-impl<S, B> Transform<S> for Authorization
+impl<S, R> Transform<S, R> for Authorization
 where
-    S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<R> + 'static,
     S::Future: 'static,
-    B: 'static,
 {
-    type Request = ServiceRequest;
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse;
     type Error = Error;
     type Transform = AuthMiddleware<S>;
     type InitError = ();
@@ -59,22 +57,20 @@ where
 /// The actual Flash middleware
 pub struct AuthMiddleware<S>(Rc<RefCell<S>>);
 
-impl<S, B> Service for AuthMiddleware<S>
+impl<S, R> Service<R, Error> for AuthMiddleware<S>
 where
-    S: Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<R> + 'static,
     S::Future: 'static,
-    B: 'static,
 {
-    type Request = ServiceRequest;
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse;
     type Error = S::Error;
-    type Future = LocalBoxFuture<'static, Result<ServiceResponse<B>, Error>>;
+    type Future = LocalBoxFuture<'static, Result<ServiceResponse, Error>>;
 
     fn poll_ready(&mut self, ctx: &mut task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.0.poll_ready(ctx)
     }
 
-    fn call(&mut self, req: Self::Request) -> Self::Future {
+    fn call(&mut self, req: R) -> Self::Future {
         let service = Rc::clone(&self.0);
         let db_pool = req.app_data::<Data<Pool>>().unwrap().clone();
         let token = match authorization::Authorization::<authorization::Bearer>::parse(&req) {

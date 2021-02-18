@@ -2,15 +2,7 @@
 use async_trait::async_trait;
 use rust_tdlib::client::api::{Api, RawApi};
 use rust_tdlib::client::client::{Client, ClientState};
-use rust_tdlib::types::{
-    AuthorizationStateWaitCode, AuthorizationStateWaitEncryptionKey,
-    AuthorizationStateWaitOtherDeviceConfirmation, AuthorizationStateWaitPassword,
-    AuthorizationStateWaitPhoneNumber, AuthorizationStateWaitRegistration, Chat, ChatType, Chats,
-    Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup,
-    GetSupergroupFullInfo, HttpUrl, JoinChat, Message, Messages, Ok, SearchPublicChats, Supergroup,
-    SupergroupFullInfo, TdType, TdlibParameters, UpdateChatPhoto, UpdateChatTitle, UpdateFile,
-    UpdateMessageContent, UpdateNewMessage,
-};
+use rust_tdlib::types::{AuthorizationStateWaitCode, AuthorizationStateWaitEncryptionKey, AuthorizationStateWaitOtherDeviceConfirmation, AuthorizationStateWaitPassword, AuthorizationStateWaitPhoneNumber, AuthorizationStateWaitRegistration, Chat, ChatType, Chats, Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup, GetSupergroupFullInfo, MessageLink, JoinChat, Message, Messages, Ok, SearchPublicChats, Supergroup, SupergroupFullInfo, Update, TdlibParameters, UpdateChatPhoto, UpdateChatTitle, UpdateFile, UpdateMessageContent, UpdateNewMessage};
 use std::io;
 use std::sync::{Arc, Mutex};
 
@@ -343,9 +335,10 @@ impl TgClient {
             .application_version(env!("CARGO_PKG_VERSION"))
             .enable_storage_optimizer(true)
             .build();
-
-        let client = ClientBuilder::default()
-            .with_auth_state_handler(AuthHandler::new(config.encryption_key, config.phone_number))
+        let worker = Worker::builder().with_auth_state_handler(
+            AuthHandler::new(config.encryption_key, config.phone_number)
+        ).build().unwrap();
+        let client = Client::builder()
             .with_tdlib_parameters(tdlib_parameters)
             .build()
             .unwrap();
@@ -376,8 +369,8 @@ impl TgClient {
         &mut self,
         updates_sender: mpsc::Sender<TgUpdate>,
     ) -> Result<()> {
-        let (sx, mut rx) = mpsc::channel::<TdType>(100);
-        self.client.set_updates_sender(sx);
+        let (sx, mut rx) = mpsc::channel::<Update>(100);
+        self.client.set_updates_sender(sx)?;
 
         let download_queue = self.download_queue.clone();
         let api = self.api.clone();

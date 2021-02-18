@@ -3,9 +3,8 @@ use crate::updates::SourceData;
 use std::sync::Arc;
 use tg_collector::parsers::TelegramDataParser;
 use tg_collector::tg_client::{TgClient, TgUpdate};
-use tokio::stream::StreamExt;
 use tokio::sync::{mpsc, Mutex, RwLock};
-use tokio::task::{spawn, JoinHandle};
+use tokio::task::spawn;
 
 /// Handler interacts with tdlib using `tg_collector` crate.
 /// It initializes updates listener and pass all updates from `tg_collector` to specified sender
@@ -64,7 +63,7 @@ where
 
                                 Ok(None) => continue,
                             };
-                            let mut local_sender = sender.lock().await;
+                            let local_sender = sender.lock().await;
 
                             if let Err(err) = local_sender.send(parsed_update).await {
                                 warn!("{}", err)

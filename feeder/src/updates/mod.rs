@@ -32,7 +32,9 @@ pub trait UpdatesHandler<T> {
 #[async_trait]
 pub trait SourceProvider {
     fn get_source(&self) -> Source;
-    async fn run(&self, updates_sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>);
+    // TODO: receive join handle from here
+    async fn run(&self, updates_sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>)
+        -> Result<()>;
     async fn search_source(&self, query: &str) -> Result<Vec<models::Source>>;
     async fn synchronize(&self, secs_depth: i32) -> Result<()>;
 }
@@ -141,7 +143,7 @@ where
                     Some(source) => {
                         let s = source.clone();
                         let sender = self.updates_sender.clone();
-                        s.run(sender).await;
+                        s.run(sender).await.unwrap();
                     }
                 }
             };
