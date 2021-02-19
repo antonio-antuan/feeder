@@ -22,6 +22,7 @@ log = "*"
 futures = "*"
 tg-collector = {path = "../tg-collector"}
 clap = "2.3.33"
+actix-http = "3.0.0-beta.3"
 
 
 actix-web-httpauth = {version = "0.5.0", optional = true}
@@ -40,10 +41,6 @@ optional = true
 [dependencies.feeder]
 path = "../feeder"
 features = ["pg-storage"]
-
-[dependencies.actix-cors]
-version = "0.5.1"
-optional = true
 
 [dependencies.actix-rt]
 version = "1.1.1"

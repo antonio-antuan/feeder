@@ -78,7 +78,7 @@ pub async fn mark_record(
     user: User,
 ) -> Result<Json<RecordWithMeta>> {
     Ok(Json(
-        records_queries::mark_record(&db_pool, user.id, record_id.0, params.starred).await?,
+        records_queries::mark_record(&db_pool, user.id, record_id.into_inner(), params.starred).await?,
     ))
 }
 

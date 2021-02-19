@@ -1,6 +1,4 @@
 use actix_web::dev::*;
-use actix_web::http::header::Header;
-
 use actix_web::{
     dev::Payload, error::ErrorUnauthorized, Error, FromRequest, HttpMessage, HttpRequest,
 };
@@ -19,6 +17,9 @@ use actix_web_httpauth::headers::authorization;
 use futures::future::{err, ok, LocalBoxFuture};
 use futures::task::Poll;
 use std::cell::RefCell;
+use actix_web_httpauth::headers::authorization::{Scheme, ParseError};
+use actix_http::http::{HeaderName, HeaderValue};
+use actix_http::http::header::{AUTHORIZATION, Header};
 
 impl FromRequest for User {
     type Error = Error;
@@ -37,13 +38,13 @@ impl FromRequest for User {
 #[derive(Default)]
 pub struct Authorization;
 
-impl<S, R> Transform<S, R> for Authorization
+impl<S> Transform<S, ServiceRequest> for Authorization
 where
-    S: Service<R> + 'static,
+    S: Service<ServiceRequest, Error = actix_web::Error, Response = ServiceResponse> + 'static,
     S::Future: 'static,
 {
     type Response = ServiceResponse;
-    type Error = Error;
+    type Error = S::Error;
     type Transform = AuthMiddleware<S>;
     type InitError = ();
     type Future = future::Ready<Result<Self::Transform, Self::InitError>>;
@@ -57,28 +58,32 @@ where
 /// The actual Flash middleware
 pub struct AuthMiddleware<S>(Rc<RefCell<S>>);
 
-impl<S, R> Service<R, Error> for AuthMiddleware<S>
+impl<S> Service<ServiceRequest> for AuthMiddleware<S>
 where
-    S: Service<R> + 'static,
+    S: Service<ServiceRequest, Error = actix_web::Error, Response = ServiceResponse> + 'static,
     S::Future: 'static,
 {
     type Response = ServiceResponse;
     type Error = S::Error;
-    type Future = LocalBoxFuture<'static, Result<ServiceResponse, Error>>;
+    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
 
-    fn poll_ready(&mut self, ctx: &mut task::Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(&self, ctx: &mut task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.0.poll_ready(ctx)
     }
 
-    fn call(&mut self, req: R) -> Self::Future {
+    fn call(&self, req: ServiceRequest) -> Self::Future {
         let service = Rc::clone(&self.0);
         let db_pool = req.app_data::<Data<Pool>>().unwrap().clone();
-        let token = match authorization::Authorization::<authorization::Bearer>::parse(&req) {
-            Ok(bearer) => bearer.into_scheme().token().to_string(),
+        let header = match req.headers().get(AUTHORIZATION).ok_or(ParseError::Invalid) {
+            Ok(v) => {v}
+            Err(err) => {return Box::pin(async { Err(ErrorUnauthorized(err)) })}
+        };
+        let token = match authorization::Bearer::parse(header).map_err(|_| ParseError::Invalid) {
+            Ok(bearer) => bearer.token().to_string(),
             Err(err) => return Box::pin(async { Err(ErrorUnauthorized(err)) }),
         };
 
-        async move {
+        Box::pin(async move {
             match users_queries::get_user_by_token(&db_pool, token).await? {
                 None => Err(ErrorUnauthorized("unauthorized")),
                 Some(user) => {
@@ -86,8 +91,7 @@ where
                     service.borrow_mut().call(req).await
                 }
             }
-        }
-        .boxed_local()
+        })
     }
 }
 

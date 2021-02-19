@@ -32,12 +32,12 @@ pub async fn unsubscribe(
     source_id: Path<i32>,
 ) -> Result<Json<()>> {
     Ok(Json(
-        sources_queries::unsubscribe(&db_pool, source_id.0, user.id).await?,
+        sources_queries::unsubscribe(&db_pool, source_id.into_inner(), user.id).await?,
     ))
 }
 
 pub async fn subscribe(db_pool: Data<Pool>, user: User, source_id: Path<i32>) -> Result<Json<()>> {
     Ok(Json(
-        sources_queries::subscribe(&db_pool, source_id.0, user.id).await?,
+        sources_queries::subscribe(&db_pool, source_id.into_inner(), user.id).await?,
     ))
 }
