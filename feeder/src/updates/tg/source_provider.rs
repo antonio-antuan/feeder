@@ -13,6 +13,7 @@ use tg_collector::parsers::TelegramDataParser;
 use tg_collector::tg_client::TgClient;
 use tokio::stream::StreamExt;
 use tokio::sync::{mpsc, Mutex};
+use std::convert::TryInto;
 
 #[async_trait]
 impl<S, P> SourceProvider for TelegramSource<S, P>
@@ -78,7 +79,7 @@ where
             let mut messages_stream = Box::pin(TgClient::get_chat_history_stream(
                 self.collector.clone(),
                 chat_id,
-                until.as_secs() as i64,
+                until.as_secs().try_into().unwrap(),
             ));
 
             let mut parsed_records = vec![];
@@ -93,7 +94,7 @@ where
                                 source_record_id: message.id().to_string(),
                                 source_id: source.id,
                                 content: c,
-                                date: Some(NaiveDateTime::from_timestamp(message.date(), 0)),
+                                date: Some(NaiveDateTime::from_timestamp(message.date().try_into().unwrap(), 0)),
                                 image: None,
                             };
                             parsed_records.push(record);

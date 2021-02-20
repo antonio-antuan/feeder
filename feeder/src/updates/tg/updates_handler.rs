@@ -6,6 +6,7 @@ use crate::updates::UpdatesHandler;
 use async_trait::async_trait;
 use tg_collector::parsers::TelegramDataParser;
 use tg_collector::types::TelegramUpdate;
+use std::convert::TryInto;
 
 #[async_trait]
 impl<S, P> UpdatesHandler<TelegramUpdate> for TelegramSource<S, P>
@@ -66,7 +67,7 @@ where
                         image: None,
                         date: message
                             .date
-                            .map(|d| chrono::NaiveDateTime::from_timestamp(d, 0)),
+                            .map(|d| chrono::NaiveDateTime::from_timestamp(d.into(), 0)),
                         source_record_id: message_id.to_string(),
                         source_id: source.id,
                         content: message.content.clone().unwrap_or_default(),

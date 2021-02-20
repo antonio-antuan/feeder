@@ -64,10 +64,10 @@ impl TelegramDataParser for DefaultTelegramParser {
                     }))
                 }
             }
-            TgUpdate::ChatPhoto(photo) => {
+            TgUpdate::ChatPhoto(_) => {
                 return Err(Error::UpdateNotSupported("photo".to_string()))
             }
-            TgUpdate::ChatTitle(title) => {
+            TgUpdate::ChatTitle(_) => {
                 return Err(Error::UpdateNotSupported("chat_title".to_string()))
             }
         })
@@ -142,54 +142,54 @@ impl TelegramDataParser for DefaultTelegramParser {
                 ))
             }
 
-            MessageContent::MessageChatChangePhoto(u) => {
+            MessageContent::MessageChatChangePhoto(_) => {
                 Err(Error::UpdateNotSupported("message_chat_change_photo".to_string()))
             }
 
-            MessageContent::MessagePoll(u) => {
+            MessageContent::MessagePoll(_) => {
                 Err(Error::UpdateNotSupported("message_poll".to_string()))
             }
-            MessageContent::MessageChatChangeTitle(u) => {
+            MessageContent::MessageChatChangeTitle(_) => {
                 Err(Error::UpdateNotSupported("message_chat_change_title".to_string()))
             }
-            MessageContent::MessageChatDeletePhoto(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageChatDeletePhoto(_) => {
+                Err(Error::UpdateNotSupported("message_chat_delete_photo".to_string()))
             }
-            MessageContent::MessageChatJoinByLink(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageChatJoinByLink(_) => {
+                Err(Error::UpdateNotSupported("message_chat_join_by_link".to_string()))
             }
-            MessageContent::MessageChatUpgradeFrom(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageChatUpgradeFrom(_) => {
+                Err(Error::UpdateNotSupported("message_chat_upgrade_from".to_string()))
             }
-            MessageContent::MessageChatUpgradeTo(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageChatUpgradeTo(_) => {
+                Err(Error::UpdateNotSupported("message_chat_upgrade_to".to_string()))
             }
-            MessageContent::MessageContact(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageContact(_) => {
+                Err(Error::UpdateNotSupported("message_contact".to_string()))
             }
-            MessageContent::MessageContactRegistered(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageContactRegistered(_) => {
+                Err(Error::UpdateNotSupported("message_contact_registered".to_string()))
             }
-            MessageContent::MessageCustomServiceAction(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageCustomServiceAction(_) => {
+                Err(Error::UpdateNotSupported("message_custom_service_action".to_string()))
             }
-            MessageContent::MessageExpiredPhoto(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageExpiredPhoto(_) => {
+                Err(Error::UpdateNotSupported("message_expired_photo".to_string()))
             }
-            MessageContent::MessageExpiredVideo(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageExpiredVideo(_) => {
+                Err(Error::UpdateNotSupported("message_expired_video".to_string()))
             }
-            MessageContent::MessageInvoice(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageInvoice(_) => {
+                Err(Error::UpdateNotSupported("message_invoice".to_string()))
             }
-            MessageContent::MessageLocation(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageLocation(_) => {
+                Err(Error::UpdateNotSupported("message_location".to_string()))
             }
-            MessageContent::MessagePassportDataReceived(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessagePassportDataReceived(_) => {
+                Err(Error::UpdateNotSupported("message_pasport_data_received".to_string()))
             }
-            MessageContent::MessageScreenshotTaken(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageScreenshotTaken(_) => {
+                Err(Error::UpdateNotSupported("message_screenshot_taken".to_string()))
             }
             MessageContent::MessageSticker(message_sticker) => {
                 let file = TelegramFileWithMeta {
@@ -199,12 +199,12 @@ impl TelegramDataParser for DefaultTelegramParser {
                 };
                 Ok((None, Some(vec![file])))
             }
-            MessageContent::MessageSupergroupChatCreate(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageSupergroupChatCreate(_) => {
+                Err(Error::UpdateNotSupported("message_supergroup_chat_create".to_string()))
             }
 
-            MessageContent::MessageVenue(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageVenue(_) => {
+                Err(Error::UpdateNotSupported("message_venue".to_string()))
             }
 
             MessageContent::MessageVideoNote(message_video_note) => {
@@ -215,11 +215,11 @@ impl TelegramDataParser for DefaultTelegramParser {
                 };
                 Ok((None, Some(vec![file])))
             }
-            MessageContent::MessageVoiceNote(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageVoiceNote(_) => {
+                Err(Error::UpdateNotSupported("message_voice_note".to_string()))
             }
-            MessageContent::MessageWebsiteConnected(u) => {
-                Err(Error::UpdateNotSupported("foo".to_string()))
+            MessageContent::MessageWebsiteConnected(_) => {
+                Err(Error::UpdateNotSupported("message_website_connected".to_string()))
             }
 
             MessageContent::_Default => Ok((None, None)),

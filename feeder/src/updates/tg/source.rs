@@ -18,7 +18,7 @@ where
     P: TelegramDataParser + Send + Sync + Clone,
 {
     parser: P,
-    api_id: i64,
+    api_id: i32,
     api_hash: String,
     phone_number: String,
     encryption_key: String,
@@ -36,7 +36,7 @@ where
     P: TelegramDataParser + Send + Sync + Clone,
 {
     pub fn new(
-        api_id: i64,
+        api_id: i32,
         api_hash: &str,
         phone_number: &str,
         max_download_queue_size: usize,
@@ -119,7 +119,7 @@ where
     P: TelegramDataParser + Send + Sync + Clone,
 {
     pub fn builder(
-        api_id: i64,
+        api_id: i32,
         api_hash: &str,
         phone_number: &str,
         max_download_queue_size: usize,
