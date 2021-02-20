@@ -20,7 +20,7 @@ env_logger = "0.7.1"
 
 diesel = { version = "1.4.4", default-features = false, features = [ "postgres", "chrono" ], optional = true }
 diesel_migrations = { version = "1.4.0", optional = true }
-tokio-diesel = { version = "0.3.0", optional = true }
+tokio-diesel = { git = "https://github.com/mehcode/tokio-diesel.git", rev = "f4af425", optional = true }
 
 http-collector = {path = "../http-collector"}
 tg-collector = {path = "../tg-collector"}

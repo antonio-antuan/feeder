@@ -1,6 +1,7 @@
 use crate::{init, server::run_server};
 use clap::{arg_enum, value_t, App, Arg, SubCommand};
 use tokio::time::Duration;
+use std::process::exit;
 
 arg_enum! {
     #[allow(non_camel_case_types)]
@@ -70,6 +71,10 @@ pub async fn run() {
                 .await
                 .expect("can't synchronize")
         }
+        (_, None) => {
+            eprintln!("command not specified");
+            exit(1)
+        },
         _ => panic!("unexpected command: {:?}", matches.subcommand_name()),
     }
 }

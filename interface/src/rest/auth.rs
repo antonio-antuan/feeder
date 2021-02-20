@@ -2,7 +2,7 @@ use actix_web::dev::*;
 use actix_web::{
     dev::Payload, error::ErrorUnauthorized, Error, FromRequest, HttpMessage, HttpRequest,
 };
-use futures::{future, task, FutureExt};
+use futures::{future, task};
 use pbkdf2::{pbkdf2_check, pbkdf2_simple};
 use std::rc::Rc;
 
@@ -18,8 +18,7 @@ use futures::future::{err, ok, LocalBoxFuture};
 use futures::task::Poll;
 use std::cell::RefCell;
 use actix_web_httpauth::headers::authorization::{Scheme, ParseError};
-use actix_http::http::{HeaderName, HeaderValue};
-use actix_http::http::header::{AUTHORIZATION, Header};
+use actix_http::http::header::AUTHORIZATION;
 
 impl FromRequest for User {
     type Error = Error;

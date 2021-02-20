@@ -23,6 +23,7 @@ pub async fn run_server(
             .app_data(Data::new(db_pool.clone()))
     });
 
+
     server
         .bind(format!("{}:{}", SETTINGS.server.host, SETTINGS.server.port))?
         .run()
