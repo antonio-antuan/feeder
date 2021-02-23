@@ -37,15 +37,15 @@ pub enum TelegramUpdate {
 pub struct TelegramMessage {
     pub message_id: i64,
     pub chat_id: i64,
-    pub date: Option<i32>,
+    pub date: Option<i64>,
     pub content: Option<String>,
     pub files: Option<Vec<TelegramFileWithMeta>>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ImageMeta {
-    pub width: i32,
-    pub height: i32,
+    pub width: i64,
+    pub height: i64,
 }
 
 impl From<&PhotoSize> for ImageMeta {
@@ -67,9 +67,9 @@ impl From<&Sticker> for ImageMeta {
 
 #[derive(Debug, Serialize)]
 pub struct AnimationMeta {
-    pub duration: i32,
-    pub width: i32,
-    pub height: i32,
+    pub duration: i64,
+    pub width: i64,
+    pub height: i64,
     pub mime_type: String,
 }
 
@@ -86,9 +86,9 @@ impl From<&Animation> for AnimationMeta {
 
 #[derive(Debug, Serialize)]
 pub struct VideoMeta {
-    pub duration: i32,
-    pub width: i32,
-    pub height: i32,
+    pub duration: i64,
+    pub width: i64,
+    pub height: i64,
 }
 
 impl From<&Video> for VideoMeta {
@@ -113,7 +113,7 @@ impl From<&VideoNote> for VideoMeta {
 
 #[derive(Debug, Serialize)]
 pub struct AudioMeta {
-    pub duration: i32,
+    pub duration: i64,
     pub title: String,
     pub performer: String,
 }
@@ -131,7 +131,7 @@ impl From<&Audio> for AudioMeta {
 pub struct PollMeta {
     pub question: String,
     pub options: Vec<PollOptionMeta>,
-    pub total_voter_count: i32,
+    pub total_voter_count: i64,
 }
 
 impl From<&Poll> for PollMeta {
@@ -147,8 +147,8 @@ impl From<&Poll> for PollMeta {
 #[derive(Debug, Serialize)]
 pub struct PollOptionMeta {
     pub text: String,
-    pub voter_count: i32,
-    pub vote_percentage: i32,
+    pub voter_count: i64,
+    pub vote_percentage: i64,
 }
 
 impl From<&PollOption> for PollOptionMeta {

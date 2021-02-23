@@ -13,7 +13,7 @@ async fn main() {
     let (sender, receiver) = mpsc::channel::<TgUpdate>(2000);
     let mut client = TgClient::builder()
         .with_api_hash(env!("API_HASH").to_string())
-        .with_api_id(env!("API_ID").parse::<i32>().unwrap())
+        .with_api_id(env!("API_ID").parse::<i64>().unwrap())
         .with_phone_number(env!("TG_PHONE").to_string())
         .with_encryption_key(env!("ENCRYPTION_KEY").to_string())
         .build()

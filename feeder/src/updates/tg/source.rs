@@ -5,7 +5,7 @@ use crate::storage::Storage;
 use std::path::Path;
 use std::sync::Arc;
 use tg_collector::parsers::TelegramDataParser;
-use tg_collector::tg_client::TgClient;
+use tg_collector::tg_client::{TgClient, ApiId};
 use tg_collector::types::FileType;
 use tg_collector::types::{TelegramFile, TelegramFileWithMeta};
 use tokio::sync::RwLock;
@@ -18,7 +18,7 @@ where
     P: TelegramDataParser + Send + Sync + Clone,
 {
     parser: P,
-    api_id: i32,
+    api_id: ApiId,
     api_hash: String,
     phone_number: String,
     encryption_key: String,
@@ -36,7 +36,7 @@ where
     P: TelegramDataParser + Send + Sync + Clone,
 {
     pub fn new(
-        api_id: i32,
+        api_id: ApiId,
         api_hash: &str,
         phone_number: &str,
         max_download_queue_size: usize,
@@ -119,7 +119,7 @@ where
     P: TelegramDataParser + Send + Sync + Clone,
 {
     pub fn builder(
-        api_id: i32,
+        api_id: ApiId,
         api_hash: &str,
         phone_number: &str,
         max_download_queue_size: usize,

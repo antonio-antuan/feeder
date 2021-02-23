@@ -31,4 +31,5 @@ features = ["with-serde"]
 
 [dev-dependencies]
 chrono = "0.4.19"
-simple_logger = "1.3"
+env_logger = "0.8"
+tokio = {version = "*", features = ["macros"]}

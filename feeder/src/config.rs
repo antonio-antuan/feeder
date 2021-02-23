@@ -58,7 +58,7 @@ pub struct TelegramConfig {
     enabled: bool,
     database_directory: String,
     log_verbosity_level: i32,
-    api_id: i32,
+    api_id: i64,
     api_hash: String,
     phone: String,
     max_download_queue_size: usize,
@@ -80,7 +80,7 @@ impl TelegramConfig {
     pub fn encryption_key(&self) -> &str {
         &self.encryption_key
     }
-    pub fn api_id(&self) -> i32 {
+    pub fn api_id(&self) -> i64 {
         self.api_id
     }
     pub fn api_hash(&self) -> &str {

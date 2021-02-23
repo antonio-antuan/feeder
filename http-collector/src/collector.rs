@@ -6,7 +6,7 @@ use reqwest::{Client, Response};
 use rss::Channel;
 use scraper::{Html, Selector};
 use std::str::FromStr;
-use url::Url;
+use url::{ParseError, Url};
 
 use crate::models::*;
 use crate::result::{Error, Result};
@@ -229,15 +229,12 @@ where
     pub async fn detect_feeds(&self, link: &str) -> Result<Vec<Feed>> {
         let content = self.scrape(link).await?;
 
+        let url = Url::parse(link)?;
         let mut result = self.traverse_parsers(link, content.as_str());
-        let favicon;
+        let favicon: Option<String>;
         let for_check = {
             let parsed_doc = Html::parse_document(content.as_str());
-            let icon_selector = Selector::parse("link[rel=\"icon\"]").unwrap();
-            favicon = match parsed_doc.select(&icon_selector).next() {
-                None => None,
-                Some(node) => node.value().attr("href").map(|h| h.to_string()),
-            };
+            favicon = get_icon(&url, &parsed_doc);
             self.detect_possible_feeds(link, parsed_doc)?
         };
 
@@ -266,6 +263,34 @@ where
             })
             .for_each(drop);
         Ok(result)
+    }
+}
+
+fn get_icon(url: &Url, doc: &Html) -> Option<String> {
+    match doc.select(&Selector::parse("link[rel=\"icon\"]").unwrap()).next() {
+        None => {
+            None
+        },
+        Some(node) => match node.value().attr("href") {
+            None => {
+                eprintln!("wqwqew");
+                None
+            },
+            Some(h) => {
+                match Url::parse(h) {
+                    Ok(u) => Some(h.to_string()),
+                    Err(ParseError::RelativeUrlWithoutBase) => {
+                        let mut url = url.clone();
+                        url.set_path(h);
+                        Some(url.to_string())
+                    },
+                    Err(err) => {
+                        log::warn!("can't get icon url: {}", err);
+                        None
+                    }
+                }
+            }
+        },
     }
 }
 
@@ -396,12 +421,27 @@ fn parse_rss_feed(link: &str, content: &str) -> Result<Feed> {
 
 #[cfg(test)]
 mod tests {
-    use crate::collector::{get_image, HttpCollector};
+    use crate::collector::{get_image, get_icon, HttpCollector};
     use crate::models::FeedKind;
     use scraper::Html;
+    use url::Url;
 
     #[test]
-    fn test_get_image() {
+    fn test_get_source_image() {
+        let url = Url::parse("https://www.opennet.ru/").unwrap();
+
+        let content = Html::parse_document(r#"<html><head><link rel="icon" type="image/png" href="/favicon.png"></head></html>"#);
+        let icon = get_icon(&url, &content);
+        assert_eq!(icon, Some("https://www.opennet.ru/favicon.png".to_string()));
+
+        let content = Html::parse_document(r#"<html><head><link rel="icon" type="image/png" href="https://some-domain.org/favicon.png"></head></html>"#);
+        let icon = get_icon(&url, &content);
+        assert_eq!(icon, Some("https://some-domain.org/favicon.png".to_string()));
+
+    }
+
+    #[test]
+    fn test_get_record_image() {
         let content = "\
         <p><img src=\"https://habrastorage.org/webt/4n/c1/v0/4nc1v0ifaa8rzyrzq5q1q7r4t8q.png\"></p>
         <br>
