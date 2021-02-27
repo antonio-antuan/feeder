@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use diesel::{delete, insert_into};
 
 use crate::db::Pool;
-use crate::result::ApiError;
+use crate::server::result::ApiError;
 use crate::schema::{sources, sources_user_settings};
 use diesel::sql_types::{Bool, Nullable};
 use feeder::models::Source;

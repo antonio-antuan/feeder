@@ -4,7 +4,7 @@ use diesel::Queryable;
 
 use crate::db::models::RecordWithMeta;
 use crate::db::Pool;
-use crate::result::ApiError;
+use crate::server::result::ApiError;
 use crate::schema::{records, records_user_settings, sources, sources_user_settings};
 use diesel::pg::upsert::excluded;
 use diesel::sql_types::{Bool, Nullable};

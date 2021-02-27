@@ -13,7 +13,7 @@ use actix_web::dev::ServiceRequest;
 use crate::db::models::User;
 use crate::db::queries::users as users_queries;
 use crate::db::Pool;
-use crate::result::ApiError;
+use crate::server::result::ApiError;
 use actix_web::web::Data;
 use actix_web_httpauth::headers::authorization;
 use futures::future::{err, ok, LocalBoxFuture};

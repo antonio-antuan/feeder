@@ -4,7 +4,7 @@ use diesel::result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as Dies
 
 use crate::db::models::User;
 use crate::db::Pool;
-use crate::result::ApiError;
+use crate::server::result::ApiError;
 use crate::schema::users;
 use tokio_diesel::*;
 

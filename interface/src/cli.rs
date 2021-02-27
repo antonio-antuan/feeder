@@ -1,4 +1,4 @@
-use crate::{init, server::run_server};
+use crate::init;
 use clap::{arg_enum, value_t, App, Arg, SubCommand};
 use tokio::time::Duration;
 
@@ -18,6 +18,8 @@ impl Into<feeder::Source> for ArgSource {
         }
     }
 }
+
+
 pub async fn run() {
     let matches = App::new("feeder")
         .arg(Arg::with_name("background").long("background").short("b").help("Enables background routines"))
@@ -38,6 +40,17 @@ pub async fn run() {
             ]),
         )
         .subcommand(SubCommand::with_name("server").about("runs web server"))
+        .subcommand(
+            SubCommand::with_name("search-source").about("search sources").arg(Arg::with_name("source_name").required(true).index(1))
+        )
+        .subcommand(
+            SubCommand::with_name("get-articles").about("get articles").args(&[
+                    Arg::with_name("source_id").short("s").long("source").takes_value(true),
+                    Arg::with_name("limit").short("l").long("limit").takes_value(true),
+                    Arg::with_name("offset").short("o").long("offset").takes_value(true),
+                ]
+            )
+        )
         .get_matches()
         .clone();
 
@@ -55,10 +68,44 @@ pub async fn run() {
     match matches.subcommand() {
         ("migrate", _) => {
             app.storage().migrate().expect("migrations failed");
+        },
+        ("get-articles", Some(sub_m)) => {
+            let source_id: Option<i32> = sub_m.value_of("source_id").map(|v|v.parse().expect("invalid source id"));
+            let limit: i64 = sub_m.value_of("limit").map(|v|v.parse().expect("invalid source id")).unwrap_or(10);
+            let offset: i64 = sub_m.value_of("offset").map(|v|v.parse().expect("invalid source id")).unwrap_or(0);
+            let pool = app.storage().pool();
+            let found = crate::db::queries::records::get_all_records(
+                &pool,
+                3,  // TODO :thinking:
+                source_id,
+                None,
+                limit,
+                offset,
+            )
+            .await;
+            println!("{:?}", found);
+        }
+        ("search-source", Some(sub_m)) => {
+            match sub_m.value_of("source_name") {
+                Some(name) => {
+                    let found = app.search_source(name).await.expect("can't search source");
+                    println!("{:?}", found);
+                }
+                None => panic!("source not specified")
+            }
+
         }
         ("server", _) => {
-            let pool = app.storage().pool();
-            run_server(app, pool).await.expect("can't run server");
+            #[cfg(feature = "web")]
+            {
+                let pool = app.storage().pool();
+                crate::server::run_server(app, pool).await.expect("can't run server");
+            }
+
+            #[cfg(not(feature = "web"))]
+            {
+                panic!("crate built without web feature");
+            }
         }
         ("sync", Some(sub_m)) => {
             let secs = value_t!(sub_m, "secs_depth", i32).expect("can't parse secs argument");
