@@ -2,8 +2,8 @@ use diesel::prelude::*;
 use diesel::{delete, insert_into};
 
 use crate::db::Pool;
-use crate::server::result::ApiError;
 use crate::schema::{sources, sources_user_settings};
+use crate::server::result::ApiError;
 use diesel::sql_types::{Bool, Nullable};
 use feeder::models::Source;
 use tokio_diesel::*;

@@ -32,6 +32,7 @@ table! {
         user_id -> Int4,
         record_id -> Int4,
         starred -> Bool,
+        tags -> Nullable<Array<Text>>,
     }
 }
 

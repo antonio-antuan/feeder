@@ -12,6 +12,7 @@ pub struct RecordWithMeta {
     pub date: NaiveDateTime,
     pub image: Option<String>,
     pub starred: Option<bool>,
+    pub tags: Vec<String>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, Clone, Debug)]

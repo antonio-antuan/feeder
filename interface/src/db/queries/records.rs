@@ -4,14 +4,17 @@ use diesel::Queryable;
 
 use crate::db::models::RecordWithMeta;
 use crate::db::Pool;
-use crate::server::result::ApiError;
 use crate::schema::{records, records_user_settings, sources, sources_user_settings};
+use crate::server::result::ApiError;
 use diesel::pg::upsert::excluded;
-use diesel::sql_types::{Bool, Nullable};
+use diesel::sql_types::{Nullable, Array, NotNull, Text, Bool};
 use feeder::models::Record;
 use tokio_diesel::*;
 
-sql_function!(fn coalesce(x: Nullable<Bool>, y: Bool) -> Bool);
+sql_function!(fn coalesce_bool(x: Nullable<Bool>, y: Bool) -> Bool);
+sql_function!(fn coalesce_array(x: Nullable<Array<Text>>, y: Array<Text>) -> Array<Text>);
+
+sql_function!(fn array_append(initial: Array<Text>, new: Text) -> Array<Text>);
 
 #[derive(Queryable)]
 struct Meta {
@@ -44,6 +47,7 @@ pub async fn get_starred_records(
             records::date,
             records::image,
             records_user_settings::starred.nullable(),
+            coalesce_array(records_user_settings::tags, vec![]),
         ));
 
     let records = match source_id {
@@ -84,6 +88,7 @@ pub async fn get_all_records(
             records::date,
             records::image,
             records_user_settings::starred.nullable(),
+            coalesce_array(records_user_settings::tags, vec![]),
         ));
     let records = match (source_id, record_id) {
         (None, None) => query.load_async::<RecordWithMeta>(db_pool).await,
@@ -115,7 +120,7 @@ pub async fn mark_record(
     record_id: i32,
     starred: bool,
 ) -> Result<RecordWithMeta, ApiError> {
-    let starred = records_user_settings::starred.eq(coalesce(starred, false));
+    let starred = records_user_settings::starred.eq(coalesce_bool(starred, false));
 
     insert_into(records_user_settings::table)
         .values((
@@ -129,6 +134,35 @@ pub async fn mark_record(
         ))
         .do_update()
         .set((records_user_settings::starred.eq(excluded(records_user_settings::starred)),))
+        .execute_async(db_pool)
+        .await?;
+    Ok(
+        get_all_records(db_pool, user_id, None, Some(record_id), 1, 0)
+            .await?
+            .first()
+            .cloned()
+            .unwrap(),
+    )
+}
+
+pub async fn add_tag(
+    db_pool: &Pool,
+    user_id: i32,
+    record_id: i32,
+    tag: String,
+) -> Result<RecordWithMeta, ApiError> {
+    insert_into(records_user_settings::table)
+        .values((
+            records_user_settings::record_id.eq(record_id),
+            records_user_settings::user_id.eq(user_id),
+            records_user_settings::tags.eq(vec![tag.clone()]),
+        ))
+        .on_conflict((
+            records_user_settings::user_id,
+            records_user_settings::record_id,
+        ))
+        .do_update()
+        .set(records_user_settings::tags.eq(array_append(coalesce_array(records_user_settings::tags, vec![]), tag)))
         .execute_async(db_pool)
         .await?;
     Ok(

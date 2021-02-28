@@ -4,8 +4,8 @@ use diesel::result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as Dies
 
 use crate::db::models::User;
 use crate::db::Pool;
-use crate::server::result::ApiError;
 use crate::schema::users;
+use crate::server::result::ApiError;
 use tokio_diesel::*;
 
 pub async fn get_user_by_token(db_pool: &Pool, token: String) -> Result<Option<User>, ApiError> {

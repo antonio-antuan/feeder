@@ -1,0 +1,1 @@
+ALTER TABLE records_user_settings ADD column tags text[] not null default '{}';
