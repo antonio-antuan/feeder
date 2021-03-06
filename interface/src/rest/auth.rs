@@ -13,7 +13,7 @@ use actix_web::dev::ServiceRequest;
 use crate::db::models::User;
 use crate::db::queries::users as users_queries;
 use crate::db::Pool;
-use crate::server::result::ApiError;
+use crate::result::Result;
 use actix_web::web::Data;
 use actix_web_httpauth::headers::authorization;
 use futures::future::{err, ok, LocalBoxFuture};
@@ -99,10 +99,12 @@ pub fn hash(password: &str) -> String {
     pbkdf2_simple(password, 5000).unwrap()
 }
 
-pub async fn login_user(db_pool: &Pool, login: String, password: String) -> Result<User, ApiError> {
+pub async fn login_user(db_pool: &Pool, login: String, password: String) -> Result<User> {
     let user = users_queries::get_user_by_login(db_pool, login).await?;
     match pbkdf2_check(user.password(), password.as_str()) {
         Ok(_) => Ok(user),
-        Err(_) => Err(ApiError::Unauthorized("invalid password".to_string())),
+        Err(_) => Err(crate::result::Error::Unauthorized(
+            "invalid password".to_string(),
+        )),
     }
 }

@@ -212,15 +212,15 @@ pub async fn run() {
             ),
         },
         ("server", _) => {
-            #[cfg(feature = "web")]
+            #[cfg(feature = "rest")]
             {
                 let pool = app.storage().pool();
-                crate::server::run_server(app, pool)
+                crate::rest::run_server(app, pool)
                     .await
                     .expect("can't run server");
             }
 
-            #[cfg(not(feature = "web"))]
+            #[cfg(not(feature = "rest"))]
             {
                 panic!("crate built without web feature");
             }

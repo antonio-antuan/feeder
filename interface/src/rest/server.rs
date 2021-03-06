@@ -1,6 +1,6 @@
 use crate::db::Pool;
-use crate::server::auth::Authorization;
-use crate::server::handlers::routes::routes;
+use crate::rest::auth::Authorization;
+use crate::rest::handlers::routes::routes;
 use crate::settings::SETTINGS;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;

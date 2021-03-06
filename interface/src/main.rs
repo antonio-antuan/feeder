@@ -8,9 +8,11 @@ mod init;
 mod settings;
 
 mod db;
+mod result;
 mod schema;
-#[cfg(feature = "web")]
-mod server;
+
+#[cfg(feature = "rest")]
+mod rest;
 
 #[tokio::main]
 async fn main() {

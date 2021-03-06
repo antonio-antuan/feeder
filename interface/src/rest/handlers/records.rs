@@ -1,7 +1,7 @@
 use crate::db::models::{RecordWithMeta, User};
 use crate::db::queries::records as records_queries;
 use crate::db::Pool;
-use crate::server::result::ApiError;
+use crate::result::Result;
 use actix_web::web::{Data, Json, Path, Query};
 use feeder::models::Record;
 use serde::Deserialize;
@@ -29,7 +29,7 @@ pub struct SourceFilter {
 pub async fn get_records_for_preview(
     db_pool: Data<Pool>,
     params: Query<SourceFilter>,
-) -> Result<Json<Vec<Record>>, ApiError> {
+) -> Result<Json<Vec<Record>>> {
     Ok(Json(
         records_queries::get_filtered(&db_pool, params.source_id, 20, 0).await?,
     ))
@@ -39,7 +39,7 @@ pub async fn get_records(
     db_pool: Data<Pool>,
     params: Query<GetFilteredRecordsRequest>,
     user: User,
-) -> Result<Json<Vec<RecordWithMeta>>, ApiError> {
+) -> Result<Json<Vec<RecordWithMeta>>> {
     let records = match params.query {
         RecordsQuery::All => {
             records_queries::get_all_records(
@@ -76,7 +76,7 @@ pub async fn mark_record(
     record_id: Path<i32>,
     params: Json<MarkRecord>,
     user: User,
-) -> Result<Json<RecordWithMeta>, ApiError> {
+) -> Result<Json<RecordWithMeta>> {
     Ok(Json(
         records_queries::mark_record(&db_pool, user.id, record_id.0, params.starred).await?,
     ))

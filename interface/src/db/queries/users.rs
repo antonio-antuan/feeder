@@ -4,11 +4,11 @@ use diesel::result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as Dies
 
 use crate::db::models::User;
 use crate::db::Pool;
+use crate::result::Result;
 use crate::schema::users;
-use crate::server::result::ApiError;
 use tokio_diesel::*;
 
-pub async fn get_user_by_token(db_pool: &Pool, token: String) -> Result<Option<User>, ApiError> {
+pub async fn get_user_by_token(db_pool: &Pool, token: String) -> Result<Option<User>> {
     let user = users::table
         .filter(users::token.eq(token))
         .first_async::<User>(db_pool)
@@ -20,11 +20,7 @@ pub async fn get_user_by_token(db_pool: &Pool, token: String) -> Result<Option<U
     }
 }
 
-pub async fn create_user(
-    db_pool: &Pool,
-    login: String,
-    hashed_password: String,
-) -> Result<User, ApiError> {
+pub async fn create_user(db_pool: &Pool, login: String, hashed_password: String) -> Result<User> {
     match insert_into(users::table)
         .values((users::login.eq(login), users::password.eq(hashed_password)))
         .get_result_async::<User>(db_pool)
@@ -34,14 +30,14 @@ pub async fn create_user(
         Err(AsyncError::Error(DieselError::DatabaseError(
             DieselDatabaseErrorKind::UniqueViolation,
             _info,
-        ))) => Err(ApiError::ValidationError(vec![
-            "user already exists".to_string()
-        ])),
+        ))) => Err(crate::result::Error::BadRequest(
+            "user already exists".to_string(),
+        )),
         Err(err) => Err(err.into()),
     }
 }
 
-pub async fn get_user_by_login(db_pool: &Pool, login: String) -> Result<User, ApiError> {
+pub async fn get_user_by_login(db_pool: &Pool, login: String) -> Result<User> {
     Ok(users::table
         .filter(users::login.eq(login))
         .first_async::<User>(db_pool)

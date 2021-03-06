@@ -3,8 +3,8 @@ use diesel::{delete, insert_into};
 
 use crate::db::models::RecordWithMeta;
 use crate::db::Pool;
+use crate::result::Result;
 use crate::schema::{record_tags, records, records_user_settings, sources, sources_user_settings};
-use crate::server::result::ApiError;
 use diesel::pg::upsert::excluded;
 use diesel::sql_types::{Array, Bool, Nullable, Text};
 use feeder::models::Record;
@@ -21,7 +21,7 @@ pub async fn get_starred_records(
     source_id: Option<i32>,
     limit: i64,
     offset: i64,
-) -> Result<Vec<RecordWithMeta>, ApiError> {
+) -> Result<Vec<RecordWithMeta>> {
     let query = records::table
         .inner_join(records_user_settings::dsl::records_user_settings)
         .left_join(record_tags::dsl::record_tags)
@@ -65,7 +65,7 @@ pub async fn get_all_records(
     record_id: Option<i32>,
     limit: i64,
     offset: i64,
-) -> Result<Vec<RecordWithMeta>, ApiError> {
+) -> Result<Vec<RecordWithMeta>> {
     let query = records::table
         .left_join(records_user_settings::dsl::records_user_settings)
         .left_join(record_tags::dsl::record_tags)
@@ -117,7 +117,7 @@ pub async fn mark_record(
     user_id: i32,
     record_id: i32,
     starred: bool,
-) -> Result<RecordWithMeta, ApiError> {
+) -> Result<RecordWithMeta> {
     let starred = records_user_settings::starred.eq(coalesce_bool(starred, false));
 
     insert_into(records_user_settings::table)
@@ -143,12 +143,7 @@ pub async fn mark_record(
     )
 }
 
-pub async fn add_tag(
-    db_pool: &Pool,
-    user_id: i32,
-    record_id: i32,
-    tag: String,
-) -> Result<(), ApiError> {
+pub async fn add_tag(db_pool: &Pool, user_id: i32, record_id: i32, tag: String) -> Result<()> {
     insert_into(record_tags::table)
         .values((
             record_tags::record_id.eq(record_id),
@@ -161,12 +156,7 @@ pub async fn add_tag(
     Ok(())
 }
 
-pub async fn remove_tag(
-    db_pool: &Pool,
-    user_id: i32,
-    record_id: i32,
-    tag: String,
-) -> Result<(), ApiError> {
+pub async fn remove_tag(db_pool: &Pool, user_id: i32, record_id: i32, tag: String) -> Result<()> {
     delete(
         record_tags::table.filter(
             record_tags::record_id
@@ -185,7 +175,7 @@ pub async fn get_filtered(
     source_id: i32,
     limit: i64,
     offset: i32,
-) -> Result<Vec<Record>, ApiError> {
+) -> Result<Vec<Record>> {
     Ok(records::table
         .filter(records::source_id.eq(source_id))
         .order(records::date.desc())

@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-web = ["actix-web-httpauth", "actix-service", "actix", "actix-cors", "actix-rt", "actix-web", "pbkdf2"]
+rest = ["actix-web-httpauth", "actix-service", "actix", "actix-cors", "actix-rt", "actix-web", "pbkdf2"]
 default = []
 
 [dependencies]
@@ -17,6 +17,7 @@ tokio = {version = "0.2", features = ["full"] }
 chrono = {version ="*", features = ["serde"]}
 tokio-diesel = "*"
 env_logger = "*"
+async-trait = "*"
 log = "*"
 futures = "*"
 tg-collector = {path = "../tg-collector"}
