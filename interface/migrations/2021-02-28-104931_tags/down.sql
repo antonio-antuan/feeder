@@ -1,1 +1,1 @@
-ALTER TABLE records_user_settings drop column tags;
+DROP TABLE record_tags;

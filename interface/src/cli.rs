@@ -1,8 +1,8 @@
 use crate::db::queries;
 use crate::init;
 use clap::{arg_enum, value_t, App, Arg, SubCommand};
-use tokio::time::Duration;
 use std::process::exit;
+use tokio::time::Duration;
 
 macro_rules! parse_arg {
     ($cmd:expr, $arg:expr) => {
@@ -94,6 +94,13 @@ pub async fn run() {
                             Arg::with_name("record_id").required(true).index(2),
                             Arg::with_name("tag").required(true).index(3),
                         ]),
+
+                    SubCommand::with_name("remove_tag")
+                        .args(&[
+                            Arg::with_name("user_id").required(true).index(1),
+                            Arg::with_name("record_id").required(true).index(2),
+                            Arg::with_name("tag").required(true).index(3),
+                        ]),
                 ])
         );
 
@@ -130,7 +137,8 @@ pub async fn run() {
                 let found = queries::records::get_all_records(
                     &pool, user_id, source_id, None, limit, offset,
                 )
-                .await.expect("can't get records");
+                .await
+                .expect("can't get records");
                 println!("{:?}", found);
             }
 
@@ -138,14 +146,27 @@ pub async fn run() {
                 let user_id = parse_arg!(star_cmd, "user_id");
                 let record_id = parse_arg!(star_cmd, "record_id");
                 let unstar = star_cmd.is_present("unstar");
-                queries::records::mark_record(&app.storage().pool(), user_id, record_id, !unstar).await.expect("can't perform record starring");
-            },
+                queries::records::mark_record(&app.storage().pool(), user_id, record_id, !unstar)
+                    .await
+                    .expect("can't perform record starring");
+            }
 
             ("add_tag", Some(add_tag)) => {
                 let user_id = parse_arg!(add_tag, "user_id");
                 let record_id = parse_arg!(add_tag, "record_id");
                 let tag = parse_arg!(add_tag, "tag");
-                queries::records::add_tag(&app.storage().pool(), user_id, record_id, tag).await.expect("can't perform record starring");
+                queries::records::add_tag(&app.storage().pool(), user_id, record_id, tag)
+                    .await
+                    .expect("can't perform tag addition");
+            }
+
+            ("remove_tag", Some(remove_tag)) => {
+                let user_id = parse_arg!(remove_tag, "user_id");
+                let record_id = parse_arg!(remove_tag, "record_id");
+                let tag = parse_arg!(remove_tag, "tag");
+                queries::records::remove_tag(&app.storage().pool(), user_id, record_id, tag)
+                    .await
+                    .expect("can't perform tag removing");
             }
             _ => panic!(
                 "unexpected command: {:?}",
@@ -156,7 +177,7 @@ pub async fn run() {
             ("", _) => {
                 eprintln!("subcommand not specified");
                 exit(1)
-            },
+            }
             ("list", Some(list_sub_cmd)) => {
                 let user_id = parse_arg!(list_sub_cmd, "user_id");
                 let list = queries::sources::get_list(&app.storage().pool(), user_id).await;

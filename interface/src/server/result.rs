@@ -87,7 +87,10 @@ impl From<DBError> for ApiError {
                 ApiError::InternalServerError("Unknown database error".into())
             }
             DBError::NotFound => ApiError::NotFound("object not found".into()),
-            _ => ApiError::InternalServerError("Unknown database error".into()),
+            _ => {
+                log::error!("{}", error);
+                ApiError::InternalServerError("Unknown database error".into())
+            }
         }
     }
 }

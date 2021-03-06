@@ -1,25 +1,19 @@
-use diesel::insert_into;
 use diesel::prelude::*;
-use diesel::Queryable;
+use diesel::{delete, insert_into};
 
 use crate::db::models::RecordWithMeta;
 use crate::db::Pool;
-use crate::schema::{records, records_user_settings, sources, sources_user_settings};
+use crate::schema::{record_tags, records, records_user_settings, sources, sources_user_settings};
 use crate::server::result::ApiError;
 use diesel::pg::upsert::excluded;
-use diesel::sql_types::{Nullable, Array, NotNull, Text, Bool};
+use diesel::sql_types::{Array, Bool, Nullable, Text};
 use feeder::models::Record;
 use tokio_diesel::*;
 
 sql_function!(fn coalesce_bool(x: Nullable<Bool>, y: Bool) -> Bool);
 sql_function!(fn coalesce_array(x: Nullable<Array<Text>>, y: Array<Text>) -> Array<Text>);
 
-sql_function!(fn array_append(initial: Array<Text>, new: Text) -> Array<Text>);
-
-#[derive(Queryable)]
-struct Meta {
-    pub starred: bool,
-}
+sql_function!(fn array_agg(x: Nullable<Text>) -> Array<Nullable<Text>>);
 
 pub async fn get_starred_records(
     db_pool: &Pool,
@@ -30,11 +24,13 @@ pub async fn get_starred_records(
 ) -> Result<Vec<RecordWithMeta>, ApiError> {
     let query = records::table
         .inner_join(records_user_settings::dsl::records_user_settings)
+        .left_join(record_tags::dsl::record_tags)
         .filter(
             records_user_settings::user_id
                 .eq(user_id)
                 .and(records_user_settings::starred),
         )
+        .group_by((records::id, records_user_settings::starred))
         .order(records::date.desc())
         .limit(limit)
         .offset(offset)
@@ -47,7 +43,7 @@ pub async fn get_starred_records(
             records::date,
             records::image,
             records_user_settings::starred.nullable(),
-            coalesce_array(records_user_settings::tags, vec![]),
+            array_agg(record_tags::tag.nullable()),
         ));
 
     let records = match source_id {
@@ -72,10 +68,12 @@ pub async fn get_all_records(
 ) -> Result<Vec<RecordWithMeta>, ApiError> {
     let query = records::table
         .left_join(records_user_settings::dsl::records_user_settings)
+        .left_join(record_tags::dsl::record_tags)
         .inner_join(
             sources::dsl::sources.inner_join(sources_user_settings::dsl::sources_user_settings),
         )
         .filter(sources_user_settings::user_id.eq(user_id))
+        .group_by((records::id, records_user_settings::starred))
         .order(records::date.desc())
         .limit(limit)
         .offset(offset)
@@ -88,7 +86,7 @@ pub async fn get_all_records(
             records::date,
             records::image,
             records_user_settings::starred.nullable(),
-            coalesce_array(records_user_settings::tags, vec![]),
+            array_agg(record_tags::tag.nullable()),
         ));
     let records = match (source_id, record_id) {
         (None, None) => query.load_async::<RecordWithMeta>(db_pool).await,
@@ -150,28 +148,36 @@ pub async fn add_tag(
     user_id: i32,
     record_id: i32,
     tag: String,
-) -> Result<RecordWithMeta, ApiError> {
-    insert_into(records_user_settings::table)
+) -> Result<(), ApiError> {
+    insert_into(record_tags::table)
         .values((
-            records_user_settings::record_id.eq(record_id),
-            records_user_settings::user_id.eq(user_id),
-            records_user_settings::tags.eq(vec![tag.clone()]),
+            record_tags::record_id.eq(record_id),
+            record_tags::user_id.eq(user_id),
+            record_tags::tag.eq(tag),
         ))
-        .on_conflict((
-            records_user_settings::user_id,
-            records_user_settings::record_id,
-        ))
-        .do_update()
-        .set(records_user_settings::tags.eq(array_append(coalesce_array(records_user_settings::tags, vec![]), tag)))
+        .on_conflict_do_nothing()
         .execute_async(db_pool)
         .await?;
-    Ok(
-        get_all_records(db_pool, user_id, None, Some(record_id), 1, 0)
-            .await?
-            .first()
-            .cloned()
-            .unwrap(),
+    Ok(())
+}
+
+pub async fn remove_tag(
+    db_pool: &Pool,
+    user_id: i32,
+    record_id: i32,
+    tag: String,
+) -> Result<(), ApiError> {
+    delete(
+        record_tags::table.filter(
+            record_tags::record_id
+                .eq(record_id)
+                .and(record_tags::user_id.eq(user_id))
+                .and(record_tags::tag.eq(tag)),
+        ),
     )
+    .execute_async(db_pool)
+    .await?;
+    Ok(())
 }
 
 pub async fn get_filtered(
