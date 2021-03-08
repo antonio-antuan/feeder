@@ -102,6 +102,25 @@ pub async fn run() {
                             Arg::with_name("tag").required(true).index(3),
                         ]),
                 ])
+        )
+        .subcommand(SubCommand::with_name("folders")
+            .subcommands(vec![
+                SubCommand::with_name("list")
+                    .args(&[
+                        Arg::with_name("user_id").required(true).index(1),
+                    ]),
+                SubCommand::with_name("add")
+                    .args(&[
+                        Arg::with_name("user_id").required(true).index(1),
+                        Arg::with_name("folder_name").required(true).index(2),
+                        Arg::with_name("parent_folder_id").required(false).index(3),
+                    ]),
+                SubCommand::with_name("remove")
+                    .args(&[
+                        Arg::with_name("user_id").required(true).index(1),
+                        Arg::with_name("folder_id").required(true).index(2),
+                    ]),
+            ])
         );
 
     let app = init::build_app();
@@ -223,6 +242,33 @@ pub async fn run() {
             #[cfg(not(feature = "rest"))]
             {
                 panic!("crate built without web feature");
+            }
+        }
+        ("folders", Some(folders_sub_cm)) => {
+            match folders_sub_cm.subcommand() {
+                ("list", Some(folders_list_sub_cm)) => {
+                    let user_id = parse_arg!(folders_list_sub_cm, "user_id");
+                    let db_pool = app.storage().pool();
+                    let folders = queries::folders::get_user_folders(&db_pool, user_id).await.expect("can't load user folders");
+                    println!("{:?}", folders);
+                },
+                ("add", Some(folders_add_sub_cm)) => {
+                    let user_id = parse_arg!(folders_add_sub_cm, "user_id");
+                    let folder_name = parse_arg!(folders_add_sub_cm, "folder_name");
+                    let parent_folder_id = folders_add_sub_cm.value_of("parent_folder_id").map(|v|v.parse().unwrap());
+                    let db_pool = app.storage().pool();
+                    queries::folders::add_user_folder(&db_pool, user_id, folder_name, parent_folder_id).await.expect("can't add user folder");
+                },
+                ("remove", Some(folders_remove_sub_cm)) => {
+                    let user_id = parse_arg!(folders_remove_sub_cm, "user_id");
+                    let folder_id = parse_arg!(folders_remove_sub_cm, "folder_id");
+                    let db_pool = app.storage().pool();
+                    queries::folders::remove_user_folder(&db_pool, user_id, folder_id).await.expect("can't add user folder");
+                },
+                 _ => panic!(
+                    "unexpected command: {:?}",
+                    folders_sub_cm.subcommand_name()
+                ),
             }
         }
         ("sync", Some(sub_m)) => {

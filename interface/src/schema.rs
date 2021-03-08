@@ -65,6 +65,23 @@ table! {
 }
 
 table! {
+    user_folders (id) {
+        id -> Int4,
+        name -> Text,
+        user_id -> Int4,
+        parent_folder -> Nullable<Int4>,
+    }
+}
+
+table! {
+    user_source_to_folder (id) {
+        id -> Int4,
+        user_source_id -> Int4,
+        folder_id -> Int4,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         last_read_date -> Timestamp,
@@ -82,6 +99,9 @@ joinable!(records_user_settings -> records (record_id));
 joinable!(records_user_settings -> users (user_id));
 joinable!(sources_user_settings -> sources (source_id));
 joinable!(sources_user_settings -> users (user_id));
+joinable!(user_folders -> users (user_id));
+joinable!(user_source_to_folder -> sources_user_settings (user_source_id));
+joinable!(user_source_to_folder -> user_folders (folder_id));
 
 allow_tables_to_appear_in_same_query!(
     files,
@@ -90,5 +110,7 @@ allow_tables_to_appear_in_same_query!(
     records_user_settings,
     sources,
     sources_user_settings,
+    user_folders,
+    user_source_to_folder,
     users,
 );

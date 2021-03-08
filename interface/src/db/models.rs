@@ -29,3 +29,11 @@ impl User {
         self.password.as_str()
     }
 }
+
+#[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
+pub struct UserFolder {
+    pub id: i32,
+    pub name: String,
+    pub user_id: i32,
+    pub parent_folder: Option<i32>
+}
