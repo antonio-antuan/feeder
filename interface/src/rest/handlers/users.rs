@@ -1,7 +1,7 @@
 use crate::db::models::User;
 use crate::db::{queries::users as users_queries, Pool};
-use crate::result::Result;
 use crate::rest::auth;
+use crate::result::Result;
 use actix_web::web::{Data, Json};
 use serde::Deserialize;
 

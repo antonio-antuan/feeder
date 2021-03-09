@@ -6,13 +6,8 @@ use tokio_diesel::AsyncError;
 #[allow(dead_code)]
 pub enum Error {
     BadRequest(String),
-    BlockingError(String),
-    CacheError(String),
-    CannotDecodeJwtToken(String),
-    CannotEncodeJwtToken(String),
     InternalServerError(String),
     NotFound(String),
-    ParseError(String),
     PoolError(String),
     #[display(fmt = "")]
     ValidationError(Vec<String>),
