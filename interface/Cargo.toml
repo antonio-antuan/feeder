@@ -59,3 +59,7 @@ optional = true
 [dependencies.config]
 version = "0.9"
 features = ["yaml"]
+
+
+[dev-dependencies]
+actix-http-test = "3.0.0-beta.3"

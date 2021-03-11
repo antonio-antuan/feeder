@@ -7,8 +7,9 @@ use feeder::storage::pg::PgStorage;
 use serde::Deserialize;
 use std::sync::Arc;
 use tg_collector::parsers::DefaultTelegramParser;
+use crate::db::models::SourceWithMeta;
 
-pub async fn get_list(db_pool: Data<Pool>, user: User) -> Result<Json<Vec<Source>>> {
+pub async fn get_list(db_pool: Data<Pool>, user: User) -> Result<Json<Vec<SourceWithMeta>>> {
     Ok(Json(sources_queries::get_list(&db_pool, user.id).await?))
 }
 
