@@ -273,12 +273,11 @@ fn get_icon(url: &Url, doc: &Html) -> Option<String> {
         },
         Some(node) => match node.value().attr("href") {
             None => {
-                eprintln!("wqwqew");
                 None
             },
             Some(h) => {
                 match Url::parse(h) {
-                    Ok(u) => Some(h.to_string()),
+                    Ok(_) => Some(h.to_string()),
                     Err(ParseError::RelativeUrlWithoutBase) => {
                         let mut url = url.clone();
                         url.set_path(h);

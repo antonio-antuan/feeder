@@ -36,7 +36,9 @@ async fn main() {
     let mut history_cursor = Box::pin(TgClient::get_chat_history_stream(
         Arc::new(RwLock::new(client)),
         all_chats.pop().unwrap().chat_id,
-        NaiveDate::from_ymd(2021, 2, 17).and_hms(0, 0, 0).timestamp() as i32,
+        NaiveDate::from_ymd(2021, 2, 17)
+            .and_hms(0, 0, 0)
+            .timestamp() as i32,
     ));
     while let Some(message) = history_cursor.next().await {
         println!(

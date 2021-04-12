@@ -13,7 +13,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tg_collector::parsers::TelegramDataParser;
 use tg_collector::tg_client::TgClient;
 use tokio::sync::{mpsc, Mutex};
-use std::convert::TryInto;
 use tokio_stream::StreamExt;
 
 #[async_trait]

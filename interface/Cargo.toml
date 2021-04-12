@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-rest = ["actix-web-httpauth", "actix-service", "actix", "actix-cors", "actix-rt", "actix-web", "pbkdf2"]
+rest = ["actix-web-httpauth", "actix-service", "actix", "actix-rt", "actix-web", "pbkdf2"]
 default = []
 
 [dependencies]
@@ -27,7 +27,7 @@ actix-http = "3.0.0-beta.3"
 
 actix-web-httpauth = {version = "0.5.0", optional = true}
 actix-service = {version = "1.0.6", optional = true}
-
+diesel_migrations = "1.4.0"
 pbkdf2 = { version = "0.2", optional = true}
 
 [dependencies.serde]

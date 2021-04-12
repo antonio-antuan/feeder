@@ -3,7 +3,7 @@ use crate::result::{Error, Result};
 use crate::tg_client::TgUpdate;
 use crate::types::*;
 use async_trait::async_trait;
-use rust_tdlib::types::{FormattedText, MessageContent, RObject, TextEntity, TextEntityType};
+use rust_tdlib::types::{FormattedText, MessageContent, TextEntity, TextEntityType};
 
 #[derive(Clone, Debug)]
 pub struct DefaultTelegramParser;
@@ -19,6 +19,9 @@ impl Default for DefaultTelegramParser {
         Self::new()
     }
 }
+
+type ParsedMessageContent = (Option<String>, Option<Vec<TelegramFileWithMeta>>);
+const OK_NO_CONTENT: Result<ParsedMessageContent> = Ok((None, None));
 
 #[async_trait]
 impl TelegramDataParser for DefaultTelegramParser {
@@ -64,9 +67,7 @@ impl TelegramDataParser for DefaultTelegramParser {
                     }))
                 }
             }
-            TgUpdate::ChatPhoto(_) => {
-                return Err(Error::UpdateNotSupported("photo".to_string()))
-            }
+            TgUpdate::ChatPhoto(_) => return Err(Error::UpdateNotSupported("photo".to_string())),
             TgUpdate::ChatTitle(_) => {
                 return Err(Error::UpdateNotSupported("chat_title".to_string()))
             }
@@ -76,7 +77,7 @@ impl TelegramDataParser for DefaultTelegramParser {
     async fn parse_message_content(
         &self,
         message: &MessageContent,
-    ) -> Result<(Option<String>, Option<Vec<TelegramFileWithMeta>>)> {
+    ) -> Result<ParsedMessageContent> {
         match message {
             MessageContent::MessageText(text) => {
                 Ok((Some(self.parse_formatted_text(text.text())), None))
@@ -142,55 +143,55 @@ impl TelegramDataParser for DefaultTelegramParser {
                 ))
             }
 
-            MessageContent::MessageChatChangePhoto(_) => {
-                Err(Error::UpdateNotSupported("message_chat_change_photo".to_string()))
-            }
+            MessageContent::MessageChatChangePhoto(_) => Err(Error::UpdateNotSupported(
+                "message_chat_change_photo".to_string(),
+            )),
 
             MessageContent::MessagePoll(_) => {
                 Err(Error::UpdateNotSupported("message_poll".to_string()))
             }
-            MessageContent::MessageChatChangeTitle(_) => {
-                Err(Error::UpdateNotSupported("message_chat_change_title".to_string()))
-            }
-            MessageContent::MessageChatDeletePhoto(_) => {
-                Err(Error::UpdateNotSupported("message_chat_delete_photo".to_string()))
-            }
-            MessageContent::MessageChatJoinByLink(_) => {
-                Err(Error::UpdateNotSupported("message_chat_join_by_link".to_string()))
-            }
-            MessageContent::MessageChatUpgradeFrom(_) => {
-                Err(Error::UpdateNotSupported("message_chat_upgrade_from".to_string()))
-            }
-            MessageContent::MessageChatUpgradeTo(_) => {
-                Err(Error::UpdateNotSupported("message_chat_upgrade_to".to_string()))
-            }
+            MessageContent::MessageChatChangeTitle(_) => Err(Error::UpdateNotSupported(
+                "message_chat_change_title".to_string(),
+            )),
+            MessageContent::MessageChatDeletePhoto(_) => Err(Error::UpdateNotSupported(
+                "message_chat_delete_photo".to_string(),
+            )),
+            MessageContent::MessageChatJoinByLink(_) => Err(Error::UpdateNotSupported(
+                "message_chat_join_by_link".to_string(),
+            )),
+            MessageContent::MessageChatUpgradeFrom(_) => Err(Error::UpdateNotSupported(
+                "message_chat_upgrade_from".to_string(),
+            )),
+            MessageContent::MessageChatUpgradeTo(_) => Err(Error::UpdateNotSupported(
+                "message_chat_upgrade_to".to_string(),
+            )),
             MessageContent::MessageContact(_) => {
                 Err(Error::UpdateNotSupported("message_contact".to_string()))
             }
-            MessageContent::MessageContactRegistered(_) => {
-                Err(Error::UpdateNotSupported("message_contact_registered".to_string()))
-            }
-            MessageContent::MessageCustomServiceAction(_) => {
-                Err(Error::UpdateNotSupported("message_custom_service_action".to_string()))
-            }
-            MessageContent::MessageExpiredPhoto(_) => {
-                Err(Error::UpdateNotSupported("message_expired_photo".to_string()))
-            }
-            MessageContent::MessageExpiredVideo(_) => {
-                Err(Error::UpdateNotSupported("message_expired_video".to_string()))
-            }
+            MessageContent::MessageContactRegistered(_) => Err(Error::UpdateNotSupported(
+                "message_contact_registered".to_string(),
+            )),
+            MessageContent::MessageCustomServiceAction(_) => Err(Error::UpdateNotSupported(
+                "message_custom_service_action".to_string(),
+            )),
+            MessageContent::MessageExpiredPhoto(_) => Err(Error::UpdateNotSupported(
+                "message_expired_photo".to_string(),
+            )),
+            MessageContent::MessageExpiredVideo(_) => Err(Error::UpdateNotSupported(
+                "message_expired_video".to_string(),
+            )),
             MessageContent::MessageInvoice(_) => {
                 Err(Error::UpdateNotSupported("message_invoice".to_string()))
             }
             MessageContent::MessageLocation(_) => {
                 Err(Error::UpdateNotSupported("message_location".to_string()))
             }
-            MessageContent::MessagePassportDataReceived(_) => {
-                Err(Error::UpdateNotSupported("message_pasport_data_received".to_string()))
-            }
-            MessageContent::MessageScreenshotTaken(_) => {
-                Err(Error::UpdateNotSupported("message_screenshot_taken".to_string()))
-            }
+            MessageContent::MessagePassportDataReceived(_) => Err(Error::UpdateNotSupported(
+                "message_pasport_data_received".to_string(),
+            )),
+            MessageContent::MessageScreenshotTaken(_) => Err(Error::UpdateNotSupported(
+                "message_screenshot_taken".to_string(),
+            )),
             MessageContent::MessageSticker(message_sticker) => {
                 let file = TelegramFileWithMeta {
                     path: message_sticker.sticker().sticker().into(),
@@ -199,9 +200,9 @@ impl TelegramDataParser for DefaultTelegramParser {
                 };
                 Ok((None, Some(vec![file])))
             }
-            MessageContent::MessageSupergroupChatCreate(_) => {
-                Err(Error::UpdateNotSupported("message_supergroup_chat_create".to_string()))
-            }
+            MessageContent::MessageSupergroupChatCreate(_) => Err(Error::UpdateNotSupported(
+                "message_supergroup_chat_create".to_string(),
+            )),
 
             MessageContent::MessageVenue(_) => {
                 Err(Error::UpdateNotSupported("message_venue".to_string()))
@@ -218,23 +219,25 @@ impl TelegramDataParser for DefaultTelegramParser {
             MessageContent::MessageVoiceNote(_) => {
                 Err(Error::UpdateNotSupported("message_voice_note".to_string()))
             }
-            MessageContent::MessageWebsiteConnected(_) => {
-                Err(Error::UpdateNotSupported("message_website_connected".to_string()))
-            }
+            MessageContent::MessageWebsiteConnected(_) => Err(Error::UpdateNotSupported(
+                "message_website_connected".to_string(),
+            )),
 
-            MessageContent::_Default(_) => Ok((None, None)),
-            MessageContent::MessageBasicGroupChatCreate(_) => Ok((None, None)),
-            MessageContent::MessageCall(_) => Ok((None, None)),
-            MessageContent::MessageChatAddMembers(_) => Ok((None, None)),
-            MessageContent::MessageChatDeleteMember(_) => Ok((None, None)),
-            MessageContent::MessageChatSetTtl(_) => Ok((None, None)),
-            MessageContent::MessageGame(_) => Ok((None, None)),
-            MessageContent::MessageGameScore(_) => Ok((None, None)),
-            MessageContent::MessagePassportDataSent(_) => Ok((None, None)),
-            MessageContent::MessagePaymentSuccessful(_) => Ok((None, None)),
-            MessageContent::MessagePaymentSuccessfulBot(_) => Ok((None, None)),
-            MessageContent::MessagePinMessage(_) => Ok((None, None)),
-            MessageContent::MessageUnsupported(_) => Ok((None, None)),
+            MessageContent::_Default => OK_NO_CONTENT,
+            MessageContent::MessageBasicGroupChatCreate(_) => OK_NO_CONTENT,
+            MessageContent::MessageCall(_) => OK_NO_CONTENT,
+            MessageContent::MessageChatAddMembers(_) => OK_NO_CONTENT,
+            MessageContent::MessageChatDeleteMember(_) => OK_NO_CONTENT,
+            MessageContent::MessageChatSetTtl(_) => OK_NO_CONTENT,
+            MessageContent::MessageGame(_) => OK_NO_CONTENT,
+            MessageContent::MessageGameScore(_) => OK_NO_CONTENT,
+            MessageContent::MessagePassportDataSent(_) => OK_NO_CONTENT,
+            MessageContent::MessagePaymentSuccessful(_) => OK_NO_CONTENT,
+            MessageContent::MessagePaymentSuccessfulBot(_) => OK_NO_CONTENT,
+            MessageContent::MessagePinMessage(_) => OK_NO_CONTENT,
+            MessageContent::MessageUnsupported(_) => OK_NO_CONTENT,
+            MessageContent::MessageDice(_) => {OK_NO_CONTENT}
+            MessageContent::MessageProximityAlertTriggered(_) => {OK_NO_CONTENT}
         }
     }
 
@@ -294,13 +297,14 @@ fn make_entities_stack(entities: &[TextEntity]) -> Vec<(usize, String)> {
             }
             TextEntityType::Underline(_) => Some(("<u>".to_string(), "</u>".to_string())),
             TextEntityType::Url(_) => Some(("<a>".to_string(), "</a>".to_string())),
-            TextEntityType::_Default(_) => None,
+            TextEntityType::_Default => None,
             // TextEntityType::BankCardNumber(_) => None,
             TextEntityType::BotCommand(_) => None,
             TextEntityType::Cashtag(_) => None,
             TextEntityType::EmailAddress(_) => None,
             TextEntityType::Mention(_) => None,
             TextEntityType::MentionName(_) => None,
+            TextEntityType::BankCardNumber(_) => {None}
         };
         if let Some((start_tag, end_tag)) = formatting {
             stack.push((entity.offset() as usize, start_tag));

@@ -1,8 +1,9 @@
-use crate::db::queries;
+use crate::db::{queries, migrate};
 use crate::init;
 use clap::{arg_enum, value_t, App, Arg, SubCommand};
 use std::process::exit;
 use tokio::time::Duration;
+use actix_rt::System;
 
 macro_rules! parse_arg {
     ($cmd:expr, $arg:expr) => {
@@ -133,15 +134,16 @@ pub async fn run() {
     // TODO: app (tg source) must start without background
     if matches.is_present("background") {
         let app_runner = app.clone();
-        tokio::spawn(async move { app_runner.run().await });
+        System::current().arbiter().spawn(async move { tokio::spawn(async move {app_runner.run().await });});
     }
 
     // TODO: wait until start properly
-    tokio::time::delay_for(Duration::from_millis(300)).await;
+    tokio::time::sleep(Duration::from_millis(300)).await;
 
     match matches.subcommand() {
         ("migrate", _) => {
             app.storage().migrate().expect("migrations failed");
+            migrate(app.storage().pool()).expect("migrations failed");
         }
         ("articles", Some(articles_command)) => match articles_command.subcommand() {
             ("list", Some(list_command)) => {

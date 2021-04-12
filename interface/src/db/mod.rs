@@ -13,3 +13,11 @@ pub fn init_pool(db_url: &str) -> Pool {
         .build(manager)
         .expect("can't initialize pool")
 }
+
+embed_migrations!();
+
+pub fn migrate(pool: Pool) -> Result<(), diesel_migrations::RunMigrationsError> {
+    let connection = pool.get().expect("can't get connection from pool");
+    embedded_migrations::run(&connection)?;
+    Ok(())
+}

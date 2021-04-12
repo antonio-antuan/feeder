@@ -15,22 +15,12 @@ pub struct Database {
     pub url: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Mongo {
-    pub connection: String,
-    pub database: String,
-}
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
     pub host: String,
     pub port: u16,
     pub enabled: bool,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Logging {
-    pub level: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -63,7 +53,6 @@ pub struct Collectors {
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub database: Database,
-    pub logging: Logging,
     pub collectors: Collectors,
     pub server: Server,
 }

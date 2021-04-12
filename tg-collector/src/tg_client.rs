@@ -1,26 +1,35 @@
 #![allow(clippy::mutex_atomic)]
 use async_trait::async_trait;
-use rust_tdlib::client::api::{Api, RawApi};
+use rust_tdlib::client::tdlib_client::TdJson;
+use rust_tdlib::client::Worker;
+use rust_tdlib::tdjson::set_log_verbosity_level;
 use rust_tdlib::client::client::{Client, ClientState};
-use rust_tdlib::types::{AuthorizationStateWaitCode, AuthorizationStateWaitEncryptionKey, AuthorizationStateWaitOtherDeviceConfirmation, AuthorizationStateWaitPassword, AuthorizationStateWaitPhoneNumber, AuthorizationStateWaitRegistration, Chat, ChatType, Chats, Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup, GetSupergroupFullInfo, MessageLink, JoinChat, Message, Messages, Ok, SearchPublicChats, Supergroup, SupergroupFullInfo, Update, TdlibParameters, UpdateChatPhoto, UpdateChatTitle, UpdateFile, UpdateMessageContent, UpdateNewMessage};
+use rust_tdlib::types::{
+    AuthorizationStateWaitCode, AuthorizationStateWaitEncryptionKey,
+    AuthorizationStateWaitOtherDeviceConfirmation, AuthorizationStateWaitPassword,
+    AuthorizationStateWaitPhoneNumber, AuthorizationStateWaitRegistration, Chat, ChatType, Chats,
+    Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup,
+    GetSupergroupFullInfo, JoinChat, Message, Messages, Ok, SearchPublicChats, Supergroup,
+    SupergroupFullInfo, TdlibParameters, Update, UpdateChatPhoto, UpdateChatTitle,
+    UpdateFile, UpdateMessageContent, UpdateNewMessage,
+};
 use std::io;
 use std::sync::{Arc, Mutex};
 
 use crate::result::{Error, Result};
-use crate::traits;
+use crate::{traits, MessageLink};
 use crate::types;
 use futures::future::join_all;
 use futures::{Stream, StreamExt, TryStreamExt};
-use rust_tdlib::client::{AuthStateHandler, ClientBuilder};
+use rust_tdlib::client::AuthStateHandler;
 use rust_tdlib::errors::RTDResult;
 use std::collections::VecDeque;
 use std::time::Duration;
+use tokio::sync::mpsc::Sender;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task::JoinHandle;
-use tokio::sync::mpsc::Sender;
 
-pub type ApiId = i64;
-
+pub type ApiId = i32;
 
 #[derive(Debug)]
 pub struct Config<'a> {
@@ -33,7 +42,6 @@ pub struct Config<'a> {
     pub api_hash: &'a str,
     pub phone_number: &'a str,
 }
-
 
 #[derive(Clone, Debug)]
 struct AuthHandler {
@@ -72,10 +80,7 @@ impl AuthStateHandler for AuthHandler {
         AuthHandler::wait_input()
     }
 
-    async fn handle_encryption_key(
-        &self,
-        _: &AuthorizationStateWaitEncryptionKey,
-    ) -> String {
+    async fn handle_encryption_key(&self, _: &AuthorizationStateWaitEncryptionKey) -> String {
         self.encryption_key.to_string()
     }
 
@@ -83,10 +88,7 @@ impl AuthStateHandler for AuthHandler {
         panic!("password not supported")
     }
 
-    async fn handle_wait_phone_number(
-        &self,
-        _: &AuthorizationStateWaitPhoneNumber,
-    ) -> String {
+    async fn handle_wait_phone_number(&self, _: &AuthorizationStateWaitPhoneNumber) -> String {
         self.phone_number.to_string()
     }
 
@@ -99,18 +101,18 @@ impl AuthStateHandler for AuthHandler {
 }
 
 #[async_trait]
-impl traits::TelegramClientTrait for Client<AuthHandler, RawApi> {
+impl traits::TelegramClientTrait for Client<TdJson> {
     async fn start(&mut self) -> Result<JoinHandle<ClientState>> {
         Ok(self.start().await?)
     }
 
-    fn set_updates_sender(&mut self, updates_sender: Sender<TdType>) -> Result<()> {
+    fn set_updates_sender(&mut self, updates_sender: Sender<Update>) -> Result<()> {
         Ok(self.set_updates_sender(updates_sender)?)
     }
 }
 
 #[async_trait]
-impl traits::TelegramAsyncApi for Api<RawApi> {
+impl traits::TelegramAsyncApi for Client<TdJson> {
     async fn download_file(&self, download_file: DownloadFile) -> RTDResult<File> {
         self.download_file(download_file).await
     }
@@ -131,7 +133,7 @@ impl traits::TelegramAsyncApi for Api<RawApi> {
         self.get_chat_history(get_chat_history).await
     }
 
-    async fn get_message_link(&self, get_message_link: GetMessageLink) -> RTDResult<HttpUrl> {
+    async fn get_message_link(&self, get_message_link: GetMessageLink) -> RTDResult<MessageLink> {
         self.get_message_link(get_message_link).await
     }
 
@@ -162,8 +164,8 @@ impl traits::TelegramAsyncApi for Api<RawApi> {
 #[derive(Debug, Default)]
 struct DownloadQueue {
     queue_size: usize,
-    queue: VecDeque<i64>,
-    in_progress: Vec<i64>,
+    queue: VecDeque<i32>,
+    in_progress: Vec<i32>,
 }
 
 impl DownloadQueue {
@@ -178,11 +180,11 @@ impl DownloadQueue {
         debug!("download queue state: {:?}", self);
     }
 
-    pub fn is_in_progress(&self, obj: &i64) -> bool {
+    pub fn is_in_progress(&self, obj: &i32) -> bool {
         self.in_progress.contains(&obj)
     }
 
-    pub fn may_be_download(&mut self, obj: i64) -> bool {
+    pub fn may_be_download(&mut self, obj: i32) -> bool {
         self.log_state();
         if self.in_progress.len() >= self.queue_size {
             self.queue.push_back(obj);
@@ -193,7 +195,7 @@ impl DownloadQueue {
         }
     }
 
-    pub fn mark_as_done_and_get_new(&mut self, obj: &i64) -> Option<i64> {
+    pub fn mark_as_done_and_get_new(&mut self, obj: &i32) -> Option<i32> {
         self.log_state();
         self.in_progress.retain(|x| x != obj);
         let new = self.queue.pop_front();
@@ -313,8 +315,8 @@ impl TgClientBuilder {
 
 #[derive(Clone)]
 pub struct TgClient {
-    client: Box<dyn traits::TelegramClientTrait>,
-    api: Box<dyn traits::TelegramAsyncApi>,
+    client: Client<TdJson>,
+    worker: Worker<AuthHandler, TdJson>,
     download_queue: Arc<Mutex<DownloadQueue>>,
 }
 
@@ -342,7 +344,6 @@ impl TgClient {
             .with_tdlib_parameters(tdlib_parameters)
             .build()
             .unwrap();
-        let api = Box::new(client.api().clone());
         let download_queue = Arc::new(Mutex::new(DownloadQueue::new(
             config.max_download_queue_size,
         )));
@@ -353,56 +354,52 @@ impl TgClient {
             tokio::spawn(async move {
                 loop {
                     q_log.lock().unwrap().log_state();
-                    tokio::time::delay_for(sleep).await;
+                    tokio::time::sleep(sleep).await;
                 }
             });
         }
         let tg = TgClient {
-            client: Box::new(client),
-            api,
+            client,
+            worker,
             download_queue,
         };
         tg
     }
 
-    pub fn start_listen_updates(
-        &mut self,
-        updates_sender: mpsc::Sender<TgUpdate>,
-    ) -> Result<()> {
+    pub fn start_listen_updates(&mut self, updates_sender: mpsc::Sender<TgUpdate>) -> Result<()> {
         let (sx, mut rx) = mpsc::channel::<Update>(100);
         self.client.set_updates_sender(sx)?;
 
         let download_queue = self.download_queue.clone();
-        let api = self.api.clone();
-        let mut sender = updates_sender.clone();
+        let api = self.client.clone();
+        let sender = updates_sender.clone();
 
         tokio::spawn(async move {
             while let Some(message) = rx.recv().await {
                 match message {
-                    TdType::UpdateNewMessage(new_message) => {
+                    Update::NewMessage(new_message) => {
                         if let Err(err) = sender.send(TgUpdate::NewMessage(new_message)).await {
                             warn!("{}", err);
                         };
                     }
-                    TdType::UpdateMessageContent(message_content) => {
-                        if let Err(err) = sender
-                            .send(TgUpdate::MessageContent(message_content))
-                            .await
+                    Update::MessageContent(message_content) => {
+                        if let Err(err) =
+                            sender.send(TgUpdate::MessageContent(message_content)).await
                         {
                             warn!("{}", err);
                         };
                     }
-                    TdType::UpdateChatPhoto(chat_photo) => {
+                    Update::ChatPhoto(chat_photo) => {
                         if let Err(err) = sender.send(TgUpdate::ChatPhoto(chat_photo)).await {
                             warn!("{}", err)
                         };
                     }
-                    TdType::UpdateChatTitle(chat_title) => {
+                    Update::ChatTitle(chat_title) => {
                         if let Err(err) = sender.send(TgUpdate::ChatTitle(chat_title)).await {
                             warn!("{}", err)
                         };
                     }
-                    TdType::UpdateFile(file) => {
+                    Update::File(file) => {
                         if file.file().local().is_downloading_completed() {
                             trace!("file {} downloading finished", file.file().id());
                             if !download_queue
@@ -430,7 +427,8 @@ impl TgClient {
                                 error!("{}", err);
                             };
                         } else {
-                            let percent = file.file().local().downloaded_size() / (file.file().expected_size() / 100);
+                            let percent = file.file().local().downloaded_size()
+                                / (file.file().expected_size() / 100);
                             debug!("file {} downloaded percent: {}", file.file().id(), percent);
                         }
                     }
@@ -442,19 +440,24 @@ impl TgClient {
     }
 
     pub async fn start(&mut self) -> Result<JoinHandle<ClientState>> {
-        self.client.start().await
+        set_log_verbosity_level(1);
+        let h = self.worker.start();
+        let (_, cl) = self.worker.auth_client(self.client.to_owned()).await?;
+        self.client = cl;
+        Ok(h)
+
     }
 
     pub async fn get_chat(&self, chat_id: &i64) -> Result<Chat> {
         Ok(self
-            .api
+            .client
             .get_chat(GetChat::builder().chat_id(*chat_id).build())
             .await?)
     }
 
     pub async fn search_public_chats(&self, query: &str) -> Result<Vec<types::Channel>> {
         let chats = self
-            .api
+            .client
             .search_public_chats(SearchPublicChats::builder().query(query).build())
             .await?;
         Ok(self.convert_chats_to_channels(chats).await?)
@@ -462,18 +465,18 @@ impl TgClient {
 
     pub async fn join_chat(&self, chat_id: &i64) -> Result<Ok> {
         Ok(self
-            .api
+            .client
             .join_chat(JoinChat::builder().chat_id(*chat_id).build())
             .await?)
     }
 
-    pub async fn download_file(&mut self, file_id: i64) -> Result<()> {
+    pub async fn download_file(&mut self, file_id: i32) -> Result<()> {
         let may_be_download = {
             let mut queue = self.download_queue.lock().unwrap();
             queue.may_be_download(file_id)
         };
         if may_be_download {
-            self.api
+            self.client
                 .download_file(make_download_file_request(file_id))
                 .await?;
         }
@@ -482,13 +485,13 @@ impl TgClient {
 
     pub async fn get_channel(&self, chat_id: i64) -> Result<Option<types::Channel>> {
         let chat = self
-            .api
+            .client
             .get_chat(GetChat::builder().chat_id(chat_id).build())
             .await?;
         match &chat.type_() {
             ChatType::Supergroup(sg) if sg.is_channel() => {
                 let sg_info = self
-                    .api
+                    .client
                     .get_supergroup_full_info(
                         GetSupergroupFullInfo::builder()
                             .supergroup_id(sg.supergroup_id())
@@ -496,7 +499,7 @@ impl TgClient {
                     )
                     .await?;
                 let sg = self
-                    .api
+                    .client
                     .get_supergroup(
                         GetSupergroup::builder()
                             .supergroup_id(sg.supergroup_id())
@@ -520,9 +523,9 @@ impl TgClient {
         Ok(result)
     }
 
-    pub async fn get_all_channels(&self, limit: i64) -> Result<Vec<types::Channel>> {
+    pub async fn get_all_channels(&self, limit: i32) -> Result<Vec<types::Channel>> {
         let chats = self
-            .api
+            .client
             .get_chats(
                 GetChats::builder()
                     .limit(limit)
@@ -536,12 +539,12 @@ impl TgClient {
     pub async fn get_chat_history(
         &self,
         chat_id: i64,
-        offset: i64,
-        limit: i64,
+        offset: i32,
+        limit: i32,
         message_id: i64,
     ) -> Result<Messages> {
         Ok(self
-            .api
+            .client
             .get_chat_history(
                 GetChatHistory::builder()
                     .chat_id(chat_id)
@@ -555,7 +558,7 @@ impl TgClient {
 
     pub async fn get_message_link(&self, chat_id: i64, message_id: i64) -> Result<String> {
         Ok(self
-            .api
+            .client
             .get_message_link(
                 GetMessageLink::builder()
                     .chat_id(chat_id)
@@ -563,14 +566,14 @@ impl TgClient {
                     .build(),
             )
             .await?
-            .url()
+            .link()
             .clone())
     }
 
     pub fn get_chat_history_stream(
         client: Arc<RwLock<TgClient>>,
         chat_id: i64,
-        date: i64,
+        date: i32,
     ) -> impl Stream<Item = Result<Message>> {
         futures::stream::unfold(
             (i64::MAX, client),
@@ -618,11 +621,11 @@ impl TgClient {
     }
 
     pub async fn close(&mut self) {
-        self.api.close(Close::builder().build()).await.unwrap();
+        self.client.close(Close::builder().build()).await.unwrap();
     }
 }
 
-fn make_download_file_request(file_id: i64) -> DownloadFile {
+fn make_download_file_request(file_id: i32) -> DownloadFile {
     DownloadFile::builder()
         .file_id(file_id)
         .synchronous(false)
@@ -645,7 +648,7 @@ pub enum TgUpdate {
 
 #[cfg(test)]
 mod tests {
-    use crate::tg_client::{get_update_file_handler, TgClient, Config};
+    use crate::tg_client::{get_update_file_handler, Config, TgClient};
     use crate::traits;
     use async_trait::async_trait;
     use rust_tdlib::client::api::Api;

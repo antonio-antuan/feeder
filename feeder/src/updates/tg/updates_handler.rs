@@ -6,7 +6,6 @@ use crate::updates::UpdatesHandler;
 use async_trait::async_trait;
 use tg_collector::parsers::TelegramDataParser;
 use tg_collector::types::TelegramUpdate;
-use std::convert::TryInto;
 
 #[async_trait]
 impl<S, P> UpdatesHandler<TelegramUpdate> for TelegramSource<S, P>

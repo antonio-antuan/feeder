@@ -6,16 +6,16 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match self {
             Error::BadRequest(error) => {
-                HttpResponse::BadRequest().json::<ErrorResponse>(error.into())
+                HttpResponse::BadRequest().json(error)
             }
             Error::NotFound(message) => {
-                HttpResponse::NotFound().json::<ErrorResponse>(message.into())
+                HttpResponse::NotFound().json(message)
             }
             Error::ValidationError(errors) => {
-                HttpResponse::UnprocessableEntity().json::<ErrorResponse>(errors.to_vec().into())
+                HttpResponse::UnprocessableEntity().json(errors.to_vec())
             }
             Error::Unauthorized(error) => {
-                HttpResponse::Unauthorized().json::<ErrorResponse>(error.into())
+                HttpResponse::Unauthorized().json(error)
             }
             _ => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
         }
