@@ -1,9 +1,9 @@
-use crate::db::{queries, migrate};
+use crate::db::{migrate, queries};
 use crate::init;
 use clap::{arg_enum, value_t, App, Arg, SubCommand};
+use std::future::Future;
 use std::process::exit;
 use tokio::time::Duration;
-use actix_rt::System;
 
 macro_rules! parse_arg {
     ($cmd:expr, $arg:expr) => {
@@ -131,10 +131,11 @@ pub async fn run() {
 
     let app = init::build_app();
     let matches = cli_app.clone().get_matches();
+
     // TODO: app (tg source) must start without background
     if matches.is_present("background") {
         let app_runner = app.clone();
-        System::current().arbiter().spawn(async move { tokio::spawn(async move {app_runner.run().await });});
+        tokio::spawn(async move { app_runner.run().await });
     }
 
     // TODO: wait until start properly

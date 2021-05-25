@@ -1,10 +1,15 @@
-use crate::db::models::{RecordWithMeta, User};
+use crate::db::models::User;
 use crate::db::queries::records as records_queries;
 use crate::db::Pool;
+use crate::rest::filters::{with_db, with_user};
 use crate::result::Result;
-use actix_web::web::{Data, Json, Path, Query};
-use feeder::models::Record;
-use serde::Deserialize;
+use std::convert::Infallible;
+use warp::Filter;
+
+#[derive(Debug, Deserialize)]
+pub struct SourceFilter {
+    pub source_id: i32,
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -22,24 +27,52 @@ pub struct GetFilteredRecordsRequest {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SourceFilter {
-    pub source_id: i32,
+pub struct MarkRecord {
+    starred: bool,
 }
 
-pub async fn get_records_for_preview(
-    db_pool: Data<Pool>,
-    params: Query<SourceFilter>,
-) -> Result<Json<Vec<Record>>> {
-    Ok(Json(
-        records_queries::get_filtered(&db_pool, params.source_id, 20, 0).await?,
-    ))
+pub fn records(
+    db: Pool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    records_preview(db.clone())
+        .or(records_list(db.clone()))
+        .or(mark_record(db.clone()))
 }
 
-pub async fn get_records(
-    db_pool: Data<Pool>,
-    params: Query<GetFilteredRecordsRequest>,
-    user: User,
-) -> Result<Json<Vec<RecordWithMeta>>> {
+fn records_list(
+    db: Pool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("records/preview")
+        .and(warp::get())
+        .and(warp::query::<models::GetFilteredRecordsRequest>())
+        .and(with_db(db))
+        .and_then(get_records_handler)
+}
+
+fn mark_record(
+    db: Pool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("records" / i32)
+        .and(warp::post())
+        .and(warp::body::json::<MarkRecord>())
+        .and(with_db(db))
+        .and_then(mark_record_handler)
+}
+
+fn records_preview(
+    db: Pool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("records")
+        .and(warp::get())
+        .and(warp::query::<models::SourceFilter>())
+        .and(with_db(db))
+        .and_then(records_preview_handler)
+}
+
+async fn get_records_handler(
+    db_pool: Pool,
+    params: GetFilteredRecordsRequest,
+) -> Result<impl warp::Reply, warp::Rejection> {
     let records = match params.query {
         RecordsQuery::All => {
             records_queries::get_all_records(
@@ -63,24 +96,22 @@ pub async fn get_records(
             .await
         }
     };
-    Ok(Json(records?))
+    Ok(warp::reply::json(&records))
 }
 
-#[derive(Debug, Deserialize)]
-pub struct MarkRecord {
-    starred: bool,
+async fn mark_record_handler(
+    record_id: i32,
+    params: MarkRecord,
+    db_pool: Pool,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let r = records_queries::mark_record(&db_pool, user.id, record_id, params.starred).await?;
+    Ok(warp::reply::json(&r))
 }
 
-pub async fn mark_record(
-    db_pool: Data<Pool>,
-    record_id: Path<i32>,
-    params: Json<MarkRecord>,
-    user: User,
-) -> Result<Json<RecordWithMeta>> {
-    Ok(Json(
-        records_queries::mark_record(&db_pool, user.id, record_id.into_inner(), params.starred).await?,
-    ))
+async fn records_preview_handler(
+    db_pool: Pool,
+    params: SourceFilter,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let res = records_queries::get_filtered(&db_pool, params.source_id, 20, 0).await?;
+    Ok(warp::reply::json(&res))
 }
-
-// TODO: retrieve comments for all records (if exists)
-// make requests inplace or store in db???

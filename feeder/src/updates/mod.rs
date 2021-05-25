@@ -120,12 +120,12 @@ where
         Ok(results)
     }
 
-    fn get_enabled_sources(&self) -> Vec<Arc<dyn SourceProvider>> {
-        let mut enabled: Vec<Arc<dyn SourceProvider>> = vec![];
+    fn get_enabled_sources(&self) -> Vec<Box<Arc<dyn SourceProvider + Send + Sync>>> {
+        let mut enabled: Vec<Box<Arc<dyn SourceProvider + Send + Sync>>> = vec![];
         macro_rules! push_if_enabled {
             ($source:expr) => {
                 match &$source {
-                    Some(source) => enabled.push(source.clone()),
+                    Some(source) => enabled.push(Box::new(source.clone())),
                     None => {}
                 }
             };

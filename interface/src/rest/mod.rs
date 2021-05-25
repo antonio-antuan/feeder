@@ -1,5 +1,6 @@
-mod auth;
+mod filters;
 mod handlers;
-pub mod result;
-pub mod server;
+mod models;
+mod server;
+
 pub use server::run_server;
