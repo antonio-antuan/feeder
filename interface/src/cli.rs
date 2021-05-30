@@ -1,7 +1,6 @@
 use crate::db::{migrate, queries};
 use crate::init;
 use clap::{arg_enum, value_t, App, Arg, SubCommand};
-use std::future::Future;
 use std::process::exit;
 use tokio::time::Duration;
 

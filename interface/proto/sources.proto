@@ -1,0 +1,50 @@
+syntax = "proto3";
+package sources;
+
+service SourcesService {
+    rpc GetSourcesList(GetSourcesListRequest) returns (GetSourcesListResponse) {
+    }
+
+    rpc SearchSources(SearchSourcesRequest) returns (SearchSourcesResponse) {
+    }
+
+    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse) {
+
+    }
+
+    rpc Unsubscribe(UnsubscribeRequest) returns (UnsubscribeResponse) {
+
+    }
+}
+
+message GetSourcesListRequest {
+
+}
+
+message GetSourcesListResponse {
+
+}
+
+message SearchSourcesRequest {
+
+}
+
+message SearchSourcesResponse {
+
+}
+
+message SubscribeRequest {
+
+}
+
+message SubscribeResponse {
+
+}
+
+message UnsubscribeRequest {
+
+}
+
+message UnsubscribeResponse {
+
+}

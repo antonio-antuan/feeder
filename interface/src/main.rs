@@ -2,20 +2,18 @@
 extern crate diesel;
 
 use crate::cli::run;
+use crate::grpc::server::run_server;
 
 mod cli;
 mod init;
-use crate::rest::wrapped_spawn;
-use actix_rt::System;
 
 mod settings;
 
+mod auth;
 mod db;
+mod grpc;
 mod result;
 mod schema;
-
-#[cfg(feature = "rest")]
-mod rest;
 
 #[macro_use]
 extern crate diesel_migrations;
@@ -24,5 +22,10 @@ extern crate diesel_migrations;
 async fn main() {
     env_logger::init();
     settings::init();
-    run();
+    let app = init::build_app();
+
+    run_server("0.0.0.0:8001", app.storage().pool())
+        .await
+        .unwrap();
+    run().await;
 }

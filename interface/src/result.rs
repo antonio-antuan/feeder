@@ -1,9 +1,6 @@
 use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
-use tokio::sync::oneshot::error::RecvError;
 use tokio_diesel::AsyncError;
-use warp::reject::{CombineRejection, IsReject};
-use warp::Rejection;
 
 #[derive(Debug, PartialEq, Display)]
 #[allow(dead_code)]
@@ -12,8 +9,6 @@ pub enum Error {
     InternalServerError(String),
     NotFound(String),
     PoolError(String),
-    #[display(fmt = "")]
-    ValidationError(Vec<String>),
     Unauthorized(String),
 }
 
