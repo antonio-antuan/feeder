@@ -1,14 +1,14 @@
-use futures::{future, task, FutureExt};
+
 use pbkdf2::{pbkdf2_check, pbkdf2_simple};
-use std::rc::Rc;
+
 
 use crate::db::models::User;
 use crate::db::queries::users as users_queries;
 use crate::db::Pool;
 use crate::result::Result;
-use futures::future::{err, ok, LocalBoxFuture};
-use futures::task::Poll;
-use std::cell::RefCell;
+
+
+
 
 pub fn hash(password: &str) -> String {
     pbkdf2_simple(password, 5000).unwrap()

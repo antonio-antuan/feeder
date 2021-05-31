@@ -1,6 +1,4 @@
 use crate::result::Error;
-use tonic::metadata::errors::ToStrError;
-use tonic::metadata::{Ascii, MetadataValue};
 
 mod proto;
 mod records;
@@ -23,17 +21,17 @@ async fn auth_user(
     db_pool: &crate::db::Pool,
     md: &tonic::metadata::MetadataMap,
 ) -> crate::result::Result<crate::db::models::User, tonic::Status> {
-    let UNAUTHORIZED: tonic::Status = tonic::Status::unauthenticated("unauthorized");
+    let unauthorized: tonic::Status = tonic::Status::unauthenticated("unauthorized");
     match md.get("token") {
-        None => Err(UNAUTHORIZED),
+        None => Err(unauthorized),
         Some(token) => Ok(crate::auth::auth_user(
             db_pool,
             token
                 .to_str()
-                .map_err(|e| tonic::Status::internal("cannot decode string"))?
+                .map_err(|_e| tonic::Status::internal("cannot decode string"))?
                 .to_string(),
         )
         .await?
-        .ok_or(UNAUTHORIZED)?),
+        .ok_or(unauthorized)?),
     }
 }

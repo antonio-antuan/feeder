@@ -10,7 +10,7 @@ pub mod users {
         fn try_from(user: crate::db::models::User) -> Result<User, Self::Error> {
             Ok(User {
                 id: user.id,
-                last_read_date: user.last_read_date.timestamp().try_into().map_err(|e| {
+                last_read_date: user.last_read_date.timestamp().try_into().map_err(|_e| {
                     Error::InternalServerError(format!(
                         "cannot convert date: {}",
                         user.last_read_date

@@ -6,7 +6,7 @@ use crate::db::models::User;
 use crate::db::Pool;
 use crate::result::Result;
 use crate::schema::users;
-use chrono::NaiveDateTime;
+
 use diesel::expression::functions::date_and_time::now;
 use tokio_diesel::*;
 
