@@ -30,3 +30,7 @@ fn check_password(password: &str, hashed_password: &str) -> bool {
         Err(_) => false,
     }
 }
+
+pub async fn auth_user(db_pool: &Pool, token: String) -> Result<Option<User>> {
+    users_queries::get_user_by_token(db_pool, token).await
+}

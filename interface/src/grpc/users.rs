@@ -2,6 +2,7 @@ use super::proto::users;
 use crate::auth;
 use crate::db::queries::users as users_queries;
 use crate::db::Pool;
+use std::convert::TryInto;
 
 #[derive(Clone)]
 pub struct Service {
@@ -24,7 +25,7 @@ impl users::users_service_server::UsersService for Service {
         let user =
             auth::login_user(&self.db_pool, &message.login, message.password.as_str()).await?;
         Ok(tonic::Response::new(users::LoginResponse {
-            user: Some(user.into()),
+            user: Some(user.try_into()?),
         }))
     }
 
@@ -37,7 +38,7 @@ impl users::users_service_server::UsersService for Service {
         let user =
             users_queries::create_user(&self.db_pool, message.login.clone(), password).await?;
         Ok(tonic::Response::new(users::RegisterResponse {
-            user: Some(user.into()),
+            user: Some(user.try_into()?),
         }))
     }
 }

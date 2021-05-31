@@ -12,26 +12,53 @@ service RecordsService {
     }
 }
 
-message GetRecordsListRequest {
+message Record {
+    int32 id = 1;
+    string title = 2;
+    string source_record_id = 3;
+    int32 source_id = 4;
+    string content = 5;
+    int64 date = 6;
+    string image = 7;
+}
 
+message RecordWithMeta {
+    Record record = 1;
+    bool starred = 2;
+    repeated string tags = 3;
+}
+
+enum RecordsQuery {
+    RECORDS_QUERY_UNDEFINED = 0;
+    RECORDS_QUERY_ALL = 1;
+    RECORDS_QUERY_STARRED = 2;
+}
+
+message GetRecordsListRequest {
+    int32 source_id = 1;
+    int32 record_id = 2;
+    uint32 limit = 3;
+    uint32 offset = 4;
+    RecordsQuery query = 5;
 }
 
 message GetRecordsListResponse {
-
+    repeated RecordWithMeta records = 1;
 }
 
 message GetRecordsPreviewRequest {
-
+    int32 source_id = 1;
 }
 
 message GetRecordsPreviewResponse {
-
+    repeated Record records = 1;
 }
 
 message MarkRecordRequest {
-
+    int32 record_id = 1;
+    bool starred = 2;
 }
 
 message MarkRecordResponse {
-
+    RecordWithMeta record = 1;
 }
