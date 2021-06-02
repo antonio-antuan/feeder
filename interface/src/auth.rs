@@ -1,14 +1,9 @@
-
 use pbkdf2::{pbkdf2_check, pbkdf2_simple};
-
 
 use crate::db::models::User;
 use crate::db::queries::users as users_queries;
 use crate::db::Pool;
 use crate::result::Result;
-
-
-
 
 pub fn hash(password: &str) -> String {
     pbkdf2_simple(password, 5000).unwrap()

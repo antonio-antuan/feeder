@@ -24,8 +24,6 @@ async fn main() {
     settings::init();
     let app = init::build_app();
 
-    run_server("0.0.0.0:8001", app.storage().pool())
-        .await
-        .unwrap();
+    run_server("0.0.0.0:8001", app).await.unwrap();
     run().await;
 }

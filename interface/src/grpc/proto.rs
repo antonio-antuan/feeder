@@ -25,6 +25,7 @@ pub mod users {
 
 pub mod records {
     tonic::include_proto!("records");
+
     impl From<crate::db::models::RecordWithMeta> for RecordWithMeta {
         fn from(record: crate::db::models::RecordWithMeta) -> Self {
             Self {
@@ -40,6 +41,37 @@ pub mod records {
                 starred: record.starred.map_or(false, |v| v),
                 tags: record.tags.into_iter().filter_map(|v| v).collect(),
             }
+        }
+    }
+}
+
+pub mod sources {
+    tonic::include_proto!("sources");
+
+    impl From<crate::db::models::SourceWithMeta> for SourceWithMeta {
+        fn from(source: crate::db::models::SourceWithMeta) -> Self {
+            Self {
+                id: source.id,
+                external_link: source.external_link,
+                name: source.name,
+                origin: source.origin,
+                kind: source.kind,
+                image: source.image.unwrap_or_default(),
+                last_scrape_time: source.last_scrape_time.timestamp(),
+                folder_id: source.folder_id,
+            }
+        }
+    }
+
+    pub fn adapt_source(source: feeder::models::Source) -> Source {
+        Source {
+            id: source.id,
+            name: source.name,
+            origin: source.origin,
+            kind: source.kind,
+            image: source.image.unwrap_or_default(),
+            last_scrape_time: source.last_scrape_time.timestamp(),
+            external_link: source.external_link,
         }
     }
 }

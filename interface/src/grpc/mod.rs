@@ -2,8 +2,10 @@ use crate::result::Error;
 
 mod proto;
 mod records;
-pub mod server;
+mod sources;
 mod users;
+
+pub mod server;
 
 impl From<Error> for tonic::Status {
     fn from(err: Error) -> Self {

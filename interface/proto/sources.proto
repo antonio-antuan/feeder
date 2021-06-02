@@ -21,20 +21,41 @@ message GetSourcesListRequest {
 
 }
 
-message GetSourcesListResponse {
+message SourceWithMeta {
+    int32 id = 1;
+    string name = 2;
+    string origin = 3;
+    string kind = 4;
+    string image = 5;
+    int64 last_scrape_time = 6;
+    string external_link = 7;
+    int32 folder_id = 8;
+}
 
+message GetSourcesListResponse {
+    repeated SourceWithMeta sources = 1;
 }
 
 message SearchSourcesRequest {
+    string query = 1;
+}
 
+message Source {
+    int32 id = 1;
+    string name = 2;
+    string origin = 3;
+    string kind = 4;
+    string image = 5;
+    int64 last_scrape_time = 6;
+    string external_link = 7;
 }
 
 message SearchSourcesResponse {
-
+    repeated Source sources = 1;
 }
 
 message SubscribeRequest {
-
+    int32 source_id = 1;
 }
 
 message SubscribeResponse {
@@ -42,7 +63,7 @@ message SubscribeResponse {
 }
 
 message UnsubscribeRequest {
-
+    int32 source_id = 1;
 }
 
 message UnsubscribeResponse {
