@@ -1,7 +1,7 @@
-use super::proto::users;
 use crate::auth;
 use crate::db::queries::users as users_queries;
 use crate::db::Pool;
+use crate::proto::users;
 use std::convert::TryInto;
 
 #[derive(Clone)]

@@ -251,18 +251,9 @@ pub async fn run() {
             ),
         },
         ("server", _) => {
-            #[cfg(feature = "rest")]
-            {
-                let pool = app.storage().pool();
-                crate::rest::run_server(app, pool)
-                    .await
-                    .expect("can't run server");
-            }
-
-            #[cfg(not(feature = "rest"))]
-            {
-                panic!("crate built without web feature");
-            }
+            crate::grpc::server::run_server(app)
+                .await
+                .expect("can't run server");
         }
         ("folders", Some(folders_sub_cm)) => match folders_sub_cm.subcommand() {
             ("list", Some(folders_list_sub_cm)) => {

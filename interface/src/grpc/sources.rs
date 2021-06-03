@@ -1,7 +1,7 @@
-use super::proto::sources;
 use crate::db::queries::sources as sources_queries;
 use crate::db::Pool;
 use crate::init::App;
+use crate::proto::sources;
 use feeder::result::Error;
 
 #[derive(Clone)]
