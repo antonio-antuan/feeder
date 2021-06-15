@@ -149,7 +149,9 @@ where
             };
         }
         run_source!(self.tg_source);
+        log::debug!("tg started");
         run_source!(self.http_source);
+        log::debug!("http started");
         self.process_updates().await;
     }
 

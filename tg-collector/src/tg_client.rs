@@ -1,24 +1,24 @@
 #![allow(clippy::mutex_atomic)]
 use async_trait::async_trait;
+use rust_tdlib::client::client::{Client, ClientState};
 use rust_tdlib::client::tdlib_client::TdJson;
 use rust_tdlib::client::Worker;
 use rust_tdlib::tdjson::set_log_verbosity_level;
-use rust_tdlib::client::client::{Client, ClientState};
 use rust_tdlib::types::{
     AuthorizationStateWaitCode, AuthorizationStateWaitEncryptionKey,
     AuthorizationStateWaitOtherDeviceConfirmation, AuthorizationStateWaitPassword,
     AuthorizationStateWaitPhoneNumber, AuthorizationStateWaitRegistration, Chat, ChatType, Chats,
     Close, DownloadFile, File, GetChat, GetChatHistory, GetChats, GetMessageLink, GetSupergroup,
     GetSupergroupFullInfo, JoinChat, Message, Messages, Ok, SearchPublicChats, Supergroup,
-    SupergroupFullInfo, TdlibParameters, Update, UpdateChatPhoto, UpdateChatTitle,
-    UpdateFile, UpdateMessageContent, UpdateNewMessage,
+    SupergroupFullInfo, TdlibParameters, Update, UpdateChatPhoto, UpdateChatTitle, UpdateFile,
+    UpdateMessageContent, UpdateNewMessage,
 };
 use std::io;
 use std::sync::{Arc, Mutex};
 
 use crate::result::{Error, Result};
-use crate::{traits, MessageLink};
 use crate::types;
+use crate::{traits, MessageLink};
 use futures::future::join_all;
 use futures::{Stream, StreamExt, TryStreamExt};
 use rust_tdlib::client::AuthStateHandler;
@@ -106,7 +106,7 @@ impl traits::TelegramClientTrait for Client<TdJson> {
         Ok(self.start().await?)
     }
 
-    fn set_updates_sender(&mut self, updates_sender: Sender<Update>) -> Result<()> {
+    fn set_updates_sender(&mut self, updates_sender: Sender<Box<Update>>) -> Result<()> {
         Ok(self.set_updates_sender(updates_sender)?)
     }
 }
@@ -337,9 +337,10 @@ impl TgClient {
             .application_version(env!("CARGO_PKG_VERSION"))
             .enable_storage_optimizer(true)
             .build();
-        let worker = Worker::builder().with_auth_state_handler(
-            AuthHandler::new(config.encryption_key, config.phone_number)
-        ).build().unwrap();
+        let worker = Worker::builder()
+            .with_auth_state_handler(AuthHandler::new(config.encryption_key, config.phone_number))
+            .build()
+            .unwrap();
         let client = Client::builder()
             .with_tdlib_parameters(tdlib_parameters)
             .build()
@@ -367,7 +368,7 @@ impl TgClient {
     }
 
     pub fn start_listen_updates(&mut self, updates_sender: mpsc::Sender<TgUpdate>) -> Result<()> {
-        let (sx, mut rx) = mpsc::channel::<Update>(100);
+        let (sx, mut rx) = mpsc::channel::<Box<Update>>(100);
         self.client.set_updates_sender(sx)?;
 
         let download_queue = self.download_queue.clone();
@@ -376,7 +377,7 @@ impl TgClient {
 
         tokio::spawn(async move {
             while let Some(message) = rx.recv().await {
-                match message {
+                match *message {
                     Update::NewMessage(new_message) => {
                         if let Err(err) = sender.send(TgUpdate::NewMessage(new_message)).await {
                             warn!("{}", err);
@@ -439,13 +440,22 @@ impl TgClient {
         Ok(())
     }
 
-    pub async fn start(&mut self) -> Result<JoinHandle<ClientState>> {
+    pub async fn start(&mut self) -> Result<JoinHandle<Result<ClientState>>> {
         set_log_verbosity_level(1);
-        let h = self.worker.start();
-        let (_, cl) = self.worker.auth_client(self.client.to_owned()).await?;
-        self.client = cl;
-        Ok(h)
-
+        self.worker.start();
+        let client = self.worker.bind_client(self.client.to_owned()).await?;
+        log::debug!("telegram client bound");
+        let state = self.worker.wait_client_state(&client).await?;
+        if state == ClientState::Opened {
+            log::debug!("client opened");
+            self.client = client.clone();
+            let worker = self.worker.clone();
+            Ok(tokio::spawn(async move {
+                Ok(worker.wait_client_state(&client).await?)
+            }))
+        } else {
+            Err(Error::Unauthorized("can't authorize client"))
+        }
     }
 
     pub async fn get_chat(&self, chat_id: &i64) -> Result<Chat> {

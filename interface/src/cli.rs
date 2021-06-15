@@ -138,7 +138,7 @@ pub async fn run() {
     }
 
     // TODO: wait until start properly
-    tokio::time::sleep(Duration::from_millis(300)).await;
+    tokio::time::sleep(Duration::from_millis(3000)).await;
 
     match matches.subcommand() {
         ("migrate", _) => {

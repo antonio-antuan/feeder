@@ -4,6 +4,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum Error {
     Common(String),
+    Unauthorized(&'static str),
     UpdateNotSupported(String),
 }
 
