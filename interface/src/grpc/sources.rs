@@ -1,7 +1,7 @@
+use super::pb::{adapt_source, sources};
 use crate::db::queries::sources as sources_queries;
 use crate::db::Pool;
 use crate::init::App;
-use crate::proto::sources;
 use feeder::result::Error;
 
 #[derive(Clone)]
@@ -52,7 +52,7 @@ impl sources::sources_service_server::SourcesService for Service {
                 Error::IOError(e) => tonic::Status::internal(e.to_string()),
             })?;
         Ok(tonic::Response::new(sources::SearchSourcesResponse {
-            sources: sources.into_iter().map(sources::adapt_source).collect(),
+            sources: sources.into_iter().map(adapt_source).collect(),
         }))
     }
 

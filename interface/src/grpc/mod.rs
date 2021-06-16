@@ -1,5 +1,6 @@
 use crate::result::Error;
 
+mod pb;
 mod records;
 mod sources;
 mod users;

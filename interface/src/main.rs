@@ -11,7 +11,6 @@ mod settings;
 mod auth;
 mod db;
 mod grpc;
-mod proto;
 mod result;
 mod schema;
 

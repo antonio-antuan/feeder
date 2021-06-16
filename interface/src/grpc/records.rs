@@ -1,6 +1,6 @@
+use super::pb::records;
 use crate::db::queries::records as records_queries;
 use crate::db::Pool;
-use crate::proto::records;
 
 #[derive(Clone)]
 pub struct Service {

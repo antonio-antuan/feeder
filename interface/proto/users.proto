@@ -3,8 +3,6 @@ syntax = "proto3";
 package users;
 
 
-import "google/protobuf/timestamp.proto";
-
 service UsersService {
     rpc Login(LoginRequest) returns (LoginResponse) {
     }

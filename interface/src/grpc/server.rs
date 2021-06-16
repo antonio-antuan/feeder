@@ -1,10 +1,10 @@
+use super::pb::records::records_service_server::RecordsServiceServer;
+use super::pb::sources::sources_service_server::SourcesServiceServer;
+use super::pb::users::users_service_server::UsersServiceServer;
 use super::records::Service as RecordsService;
 use super::sources::Service as SourcesService;
 use super::users::Service as UsersService;
 use crate::init::App;
-use crate::proto::records::records_service_server::RecordsServiceServer;
-use crate::proto::sources::sources_service_server::SourcesServiceServer;
-use crate::proto::users::users_service_server::UsersServiceServer;
 use crate::settings::SETTINGS;
 use tonic::transport::Server;
 
