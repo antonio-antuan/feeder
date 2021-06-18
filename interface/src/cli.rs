@@ -17,7 +17,8 @@ arg_enum! {
     #[allow(non_camel_case_types)]
     pub enum ArgSource {
         web,
-        tg
+        tg,
+        vk,
     }
 }
 
@@ -26,6 +27,7 @@ impl Into<feeder::Source> for ArgSource {
         match self {
             ArgSource::web => feeder::Source::Web,
             ArgSource::tg => feeder::Source::Telegram,
+            ArgSource::vk => feeder::Source::Vk,
         }
     }
 }

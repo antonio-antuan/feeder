@@ -12,7 +12,6 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tg_collector::parsers::TelegramDataParser;
 use tg_collector::tg_client::TgClient;
-use tokio_stream::StreamExt;
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::StreamExt;
 
@@ -98,7 +97,10 @@ where
                                 source_record_id: message.id().to_string(),
                                 source_id: source.id,
                                 content: c,
-                                date: Some(NaiveDateTime::from_timestamp(message.date().try_into().unwrap(), 0)),
+                                date: Some(NaiveDateTime::from_timestamp(
+                                    message.date().try_into().unwrap(),
+                                    0,
+                                )),
                                 image: None,
                             };
                             parsed_records.push(record);

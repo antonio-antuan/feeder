@@ -236,8 +236,8 @@ impl TelegramDataParser for DefaultTelegramParser {
             MessageContent::MessagePaymentSuccessfulBot(_) => OK_NO_CONTENT,
             MessageContent::MessagePinMessage(_) => OK_NO_CONTENT,
             MessageContent::MessageUnsupported(_) => OK_NO_CONTENT,
-            MessageContent::MessageDice(_) => {OK_NO_CONTENT}
-            MessageContent::MessageProximityAlertTriggered(_) => {OK_NO_CONTENT}
+            MessageContent::MessageDice(_) => OK_NO_CONTENT,
+            MessageContent::MessageProximityAlertTriggered(_) => OK_NO_CONTENT,
         }
     }
 
@@ -304,7 +304,7 @@ fn make_entities_stack(entities: &[TextEntity]) -> Vec<(usize, String)> {
             TextEntityType::EmailAddress(_) => None,
             TextEntityType::Mention(_) => None,
             TextEntityType::MentionName(_) => None,
-            TextEntityType::BankCardNumber(_) => {None}
+            TextEntityType::BankCardNumber(_) => None,
         };
         if let Some((start_tag, end_tag)) = formatting {
             stack.push((entity.offset() as usize, start_tag));

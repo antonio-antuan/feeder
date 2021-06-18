@@ -197,7 +197,7 @@ where
         Source::Vk
     }
 
-    async fn run(&self, updates_sender: Arc<Mutex<Sender<Result<SourceData>>>>) {
+    async fn run(&self, updates_sender: Arc<Mutex<Sender<Result<SourceData>>>>) -> Result<()> {
         let (sources_sender, sources_receiver) = mpsc::channel(2000);
 
         let sleep_secs = self.sleep_secs;
@@ -209,6 +209,7 @@ where
 
         let cl = self.client.clone();
         tokio::spawn(async move { run_scrapper(cl.as_ref(), sources_receiver).await });
+        Ok(())
     }
 
     async fn search_source(&self, query: &str) -> Result<Vec<models::Source>> {

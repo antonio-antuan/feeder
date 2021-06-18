@@ -45,6 +45,7 @@ impl sources::sources_service_server::SourcesService for Service {
                 Error::DbError(e) => tonic::Status::internal(e),
                 Error::HttpCollectorError(e) => tonic::Status::internal(e.to_string()),
                 Error::TgCollectorError(e) => tonic::Status::internal(e.to_string()),
+                Error::VkCollectorError(e) => tonic::Status::internal(e.to_string()),
                 Error::UpdateNotSupported(e) => tonic::Status::internal(e),
                 Error::SourceKindConflict(e) => tonic::Status::internal(e),
                 Error::SourceNotFound => tonic::Status::not_found("source not found"),
