@@ -1,7 +1,7 @@
+use super::CloneableBoxedParser;
 use crate::result::{Error, Result};
 use crate::updates::SourceData;
 use std::sync::Arc;
-use tg_collector::parsers::TelegramDataParser;
 use tg_collector::tg_client::{TgClient, TgUpdate};
 use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::task::spawn;
@@ -10,26 +10,20 @@ use tokio::task::spawn;
 /// It initializes updates listener and pass all updates from `tg_collector` to specified sender
 
 #[derive(Clone)]
-pub struct Handler<P>
-where
-    P: TelegramDataParser + Send + Sync + Clone + 'static,
-{
+pub struct Handler {
     sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>,
     tg: Arc<RwLock<TgClient>>,
     orig_sender: mpsc::Sender<TgUpdate>,
     orig_receiver: Arc<Mutex<mpsc::Receiver<TgUpdate>>>,
-    parser: P,
+    parser: CloneableBoxedParser,
 }
 
-impl<P> Handler<P>
-where
-    P: TelegramDataParser + Send + Sync + Clone + 'static,
-{
+impl Handler {
     /// Creates new Handler with specified
     pub fn new(
         sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>,
         tg: Arc<RwLock<TgClient>>,
-        parser: P,
+        parser: CloneableBoxedParser,
     ) -> Self {
         // TODO: configure channel size
         let (orig_sender, orig_receiver) = mpsc::channel::<TgUpdate>(2000);

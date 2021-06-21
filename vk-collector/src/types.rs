@@ -132,23 +132,25 @@ impl JobGroupsGet {
     }
 
     pub fn get_parameters(&self) -> String {
-        let mut p = format!("offset={offset}&count={count}",
-                            offset=&self.parameters.offset,
-                            count=&self.parameters.count);
+        let mut p = format!(
+            "offset={offset}&count={count}",
+            offset = &self.parameters.offset,
+            count = &self.parameters.count
+        );
         if let Some(u) = &self.parameters.user_id {
-            p = format!("{}&user_id={u}", p, u=u);
+            p = format!("{}&user_id={u}", p, u = u);
         }
 
         if let Some(e) = self.parameters.extended {
-            p = format!("{}&extended={e}", p, e=e as u8); // flag, we need to convert bool to 0 or 1
+            p = format!("{}&extended={e}", p, e = e as u8); // flag, we need to convert bool to 0 or 1
         }
 
         if let Some(f) = &self.parameters.filter {
-            p = format!("{}&filter={f}", p, f=f);
+            p = format!("{}&filter={f}", p, f = f);
         }
 
         if let Some(f) = &self.parameters.fields {
-            p = format!("{}&fields={f}", p, f=f);
+            p = format!("{}&fields={f}", p, f = f);
         }
 
         p
@@ -185,13 +187,7 @@ impl JobGroupsGetById {
         fields: Option<String>,
     ) -> (Self, oneshot::Receiver<result::Result<Vec<Group>>>) {
         let (s, r) = oneshot::channel();
-        let job = JobGroupsGetById::new(
-            GroupsGetByIdParameters {
-                group_ids,
-                fields,
-            },
-            s,
-        );
+        let job = JobGroupsGetById::new(GroupsGetByIdParameters { group_ids, fields }, s);
         (job, r)
     }
 
@@ -201,7 +197,7 @@ impl JobGroupsGetById {
             group_ids = &self.parameters.group_ids,
         );
         if let Some(f) = &self.parameters.fields {
-            r = format!("{}&fields={fields}", r, fields=f)
+            r = format!("{}&fields={fields}", r, fields = f)
         }
         r
     }
@@ -321,7 +317,7 @@ impl Job {
     pub fn get_method(&self) -> &str {
         match self {
             Job::WallGet(_) => "wall.get",
-            Job::GroupSearch(_) => "group.search",
+            Job::GroupSearch(_) => "groups.search",
             Job::GroupsGetById(_) => "groups.getById",
             Job::GroupsGet(_) => "groups.get",
         }

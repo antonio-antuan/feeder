@@ -1,10 +1,11 @@
 #[macro_use]
 extern crate log;
 
-pub mod parsers;
+pub use rust_tdlib::types::*;
+
 pub mod result;
 pub mod tg_client;
 mod traits;
 pub mod types;
-
-pub use rust_tdlib::types::*;
+// UpdatesHandler trait implementation
+pub mod parsers;

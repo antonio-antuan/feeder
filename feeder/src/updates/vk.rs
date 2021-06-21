@@ -1,6 +1,9 @@
 use async_trait::async_trait;
-use vk_collector::client::VkClient;
-use vk_collector::types::{Group, WallItem};
+use vk_collector::{
+    client::VkClient,
+    result::Result as VkResult,
+    types::{Group, WallItem},
+};
 
 use super::{SourceData, SourceProvider, UpdatesHandler};
 use crate::models;
@@ -208,7 +211,8 @@ where
         });
 
         let cl = self.client.clone();
-        tokio::spawn(async move { run_scrapper(cl.as_ref(), sources_receiver).await });
+        let handler = Handler::new(updates_sender);
+        tokio::spawn(async move { run_scrapper(cl.as_ref(), sources_receiver, handler).await });
         Ok(())
     }
 
@@ -259,21 +263,21 @@ where
 
 impl<S> VkSource<S> where S: Storage + Send + Sync + Clone + 'static {}
 
-async fn get_records_for_source(client: &VkClient, source_id: String) -> Result<Vec<VkUpdate>> {
-    Ok(client
-        .get_wall(source_id.parse().unwrap(), 0, 25)
-        .await?
-        .into_iter()
-        .map(VkUpdate::from)
-        .collect())
+async fn get_records_for_source(client: &VkClient, source_id: String, handler: &Handler) {
+    let update = client.get_wall(source_id.parse().unwrap(), 0, 25).await;
+    handler.process(update).await;
 }
 
 // TODO: generic scrapper. trait?
-async fn run_scrapper(client: &VkClient, mut sources_receiver: mpsc::Receiver<Vec<String>>) {
+async fn run_scrapper(
+    client: &VkClient,
+    mut sources_receiver: mpsc::Receiver<Vec<String>>,
+    handler: Handler,
+) {
     while let Some(sources) = sources_receiver.recv().await {
         let mut tasks = vec![];
         for source in sources {
-            tasks.push(get_records_for_source(client, source));
+            tasks.push(get_records_for_source(client, source, &handler));
         }
         join_all(tasks).await;
     }
@@ -308,7 +312,7 @@ async fn sources_gen<S: Storage>(
     storage: S,
     source_check_period: i32,
     sleep_period: u64,
-    mut sender: mpsc::Sender<Vec<String>>,
+    sender: mpsc::Sender<Vec<String>>,
 ) {
     let sleep_period = time::Duration::from_secs(sleep_period);
     loop {
@@ -337,4 +341,32 @@ async fn get_sources<S: Storage>(
         .iter()
         .map(|r| r.origin.clone())
         .collect())
+}
+
+struct Handler {
+    sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>,
+}
+
+impl Handler {
+    pub fn new(sender: Arc<Mutex<mpsc::Sender<Result<SourceData>>>>) -> Self {
+        Self { sender }
+    }
+
+    async fn process(&self, result: VkResult<Vec<WallItem>>) {
+        let send = |d| async {
+            let local = self.sender.lock().await;
+            if local.send(d).await.is_err() {
+                error!("updates receiver dropped");
+            }
+        };
+
+        match result {
+            Ok(updates) => {
+                for update in updates {
+                    send(Ok(SourceData::Vk(VkUpdate::from(update)))).await
+                }
+            }
+            Err(err) => send(Err(Error::VkCollectorError(err))).await,
+        };
+    }
 }

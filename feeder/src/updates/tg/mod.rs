@@ -1,16 +1,20 @@
+pub use source::*;
+pub use source_provider::*;
+use std::sync::Arc;
+use tg_collector::parsers;
+use tg_collector::types::Channel;
+pub use tg_collector::types::TelegramUpdate;
+pub use updates_handler::*;
+
 // module reads from tdlib stream and pass updates to common app stream
 mod handler;
 // telegram source struct and methods
 mod source;
 // SourceProvider trait implementation
 mod source_provider;
-// UpdatesHandler trait implementation
 mod updates_handler;
 
-pub use source::*;
-pub use source_provider::*;
-use tg_collector::types::Channel;
-pub use updates_handler::*;
+pub type CloneableBoxedParser = Arc<Box<dyn parsers::TelegramDataParser + Send + Sync>>;
 
 impl From<Channel> for crate::models::NewSource {
     fn from(channel: Channel) -> crate::models::NewSource {
@@ -23,5 +27,3 @@ impl From<Channel> for crate::models::NewSource {
         }
     }
 }
-
-pub use tg_collector::types::TelegramUpdate;

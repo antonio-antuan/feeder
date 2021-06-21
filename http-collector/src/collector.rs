@@ -267,28 +267,25 @@ where
 }
 
 fn get_icon(url: &Url, doc: &Html) -> Option<String> {
-    match doc.select(&Selector::parse("link[rel=\"icon\"]").unwrap()).next() {
-        None => {
-            None
-        },
+    match doc
+        .select(&Selector::parse("link[rel=\"icon\"]").unwrap())
+        .next()
+    {
+        None => None,
         Some(node) => match node.value().attr("href") {
-            None => {
-                None
-            },
-            Some(h) => {
-                match Url::parse(h) {
-                    Ok(_) => Some(h.to_string()),
-                    Err(ParseError::RelativeUrlWithoutBase) => {
-                        let mut url = url.clone();
-                        url.set_path(h);
-                        Some(url.to_string())
-                    },
-                    Err(err) => {
-                        log::warn!("can't get icon url: {}", err);
-                        None
-                    }
+            None => None,
+            Some(h) => match Url::parse(h) {
+                Ok(_) => Some(h.to_string()),
+                Err(ParseError::RelativeUrlWithoutBase) => {
+                    let mut url = url.clone();
+                    url.set_path(h);
+                    Some(url.to_string())
                 }
-            }
+                Err(err) => {
+                    log::warn!("can't get icon url: {}", err);
+                    None
+                }
+            },
         },
     }
 }
@@ -420,7 +417,7 @@ fn parse_rss_feed(link: &str, content: &str) -> Result<Feed> {
 
 #[cfg(test)]
 mod tests {
-    use crate::collector::{get_image, get_icon, HttpCollector};
+    use crate::collector::{get_icon, get_image, HttpCollector};
     use crate::models::FeedKind;
     use scraper::Html;
     use url::Url;
@@ -429,14 +426,20 @@ mod tests {
     fn test_get_source_image() {
         let url = Url::parse("https://www.opennet.ru/").unwrap();
 
-        let content = Html::parse_document(r#"<html><head><link rel="icon" type="image/png" href="/favicon.png"></head></html>"#);
+        let content = Html::parse_document(
+            r#"<html><head><link rel="icon" type="image/png" href="/favicon.png"></head></html>"#,
+        );
         let icon = get_icon(&url, &content);
         assert_eq!(icon, Some("https://www.opennet.ru/favicon.png".to_string()));
 
-        let content = Html::parse_document(r#"<html><head><link rel="icon" type="image/png" href="https://some-domain.org/favicon.png"></head></html>"#);
+        let content = Html::parse_document(
+            r#"<html><head><link rel="icon" type="image/png" href="https://some-domain.org/favicon.png"></head></html>"#,
+        );
         let icon = get_icon(&url, &content);
-        assert_eq!(icon, Some("https://some-domain.org/favicon.png".to_string()));
-
+        assert_eq!(
+            icon,
+            Some("https://some-domain.org/favicon.png".to_string())
+        );
     }
 
     #[test]

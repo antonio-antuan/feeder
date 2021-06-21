@@ -4,14 +4,12 @@ use crate::storage::Storage;
 use crate::updates::tg::TelegramSource;
 use crate::updates::UpdatesHandler;
 use async_trait::async_trait;
-use tg_collector::parsers::TelegramDataParser;
 use tg_collector::types::TelegramUpdate;
 
 #[async_trait]
-impl<S, P> UpdatesHandler<TelegramUpdate> for TelegramSource<S, P>
+impl<S> UpdatesHandler<TelegramUpdate> for TelegramSource<S>
 where
     S: Storage + Send + Sync,
-    P: TelegramDataParser + Send + Sync + Clone,
 {
     async fn create_source(&self, updates: &TelegramUpdate) -> Result<models::Source> {
         match updates {

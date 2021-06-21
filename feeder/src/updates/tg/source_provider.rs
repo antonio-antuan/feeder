@@ -10,16 +10,14 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tg_collector::parsers::TelegramDataParser;
 use tg_collector::tg_client::TgClient;
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::StreamExt;
 
 #[async_trait]
-impl<S, P> SourceProvider for TelegramSource<S, P>
+impl<S> SourceProvider for TelegramSource<S>
 where
     S: Storage + Send + Sync,
-    P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
     fn get_source(&self) -> Source {
         Source::Telegram

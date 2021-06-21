@@ -53,14 +53,18 @@ fn init_app_config() -> config::AppConfig {
         .expect("can't create collector config")
 }
 
-pub type App = Arc<AggApp<PgStorage, DefaultTelegramParser>>;
+pub type App = Arc<AggApp<PgStorage>>;
 
 pub fn build_app() -> App {
     let db_pool = db::init_pool(settings::SETTINGS.database.url.as_str());
     let storage = PgStorage::new(db_pool.clone());
     let app_config = init_app_config();
     Arc::new(
-        aggregator::AppBuilder::new(&app_config, storage.clone(), DefaultTelegramParser::new())
-            .build(),
+        aggregator::AppBuilder::new(
+            &app_config,
+            storage.clone(),
+            Arc::new(Box::new(DefaultTelegramParser::new())),
+        )
+        .build(),
     )
 }

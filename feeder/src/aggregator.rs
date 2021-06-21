@@ -2,26 +2,24 @@
 use crate::models;
 use crate::result::Result;
 use crate::storage::Storage;
+use crate::updates::tg::CloneableBoxedParser;
 use crate::updates::Source;
 use crate::{config, updates};
 use std::sync::Arc;
-use tg_collector::parsers::TelegramDataParser;
 
-pub struct AggApp<S, P>
+pub struct AggApp<S>
 where
     S: Storage + Send + Sync + Clone + 'static,
-    P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
-    handler: updates::SourcesAggregator<S, P>,
+    handler: updates::SourcesAggregator<S>,
     storage: S,
 }
 
-impl<S, P> AggApp<S, P>
+impl<S> AggApp<S>
 where
     S: Storage + Send + Sync + Clone + 'static,
-    P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
-    pub fn new(handler: updates::SourcesAggregator<S, P>, storage: S) -> Self {
+    pub fn new(handler: updates::SourcesAggregator<S>, storage: S) -> Self {
         Self { handler, storage }
     }
 
@@ -42,22 +40,24 @@ where
     }
 }
 
-pub struct AppBuilder<'a, S, P>
+pub struct AppBuilder<'a, S>
 where
     S: Storage + Send + Sync + Clone + 'static,
-    P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
     config: &'a config::AppConfig,
     storage: S,
-    telegram_parser: P,
+    telegram_parser: CloneableBoxedParser,
 }
 
-impl<'a, S, P> AppBuilder<'a, S, P>
+impl<'a, S> AppBuilder<'a, S>
 where
     S: Storage + Clone + Send + Sync + Clone + 'static,
-    P: TelegramDataParser + Send + Sync + Clone + 'static,
 {
-    pub fn new(config: &'a config::AppConfig, storage: S, telegram_parser: P) -> Self {
+    pub fn new(
+        config: &'a config::AppConfig,
+        storage: S,
+        telegram_parser: CloneableBoxedParser,
+    ) -> Self {
         Self {
             config,
             storage,
@@ -65,7 +65,7 @@ where
         }
     }
 
-    pub fn build(self) -> AggApp<S, P> {
+    pub fn build(self) -> AggApp<S> {
         debug!("config for building: {:?}", self.config);
         let mut updates_builder =
             updates::SourcesAggregator::builder().with_storage(self.storage.clone());
