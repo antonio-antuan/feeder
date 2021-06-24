@@ -199,6 +199,9 @@ where
     }
 
     fn file_may_be_download(&self, file: &TelegramFileWithMeta) -> bool {
+        if self.max_download_queue_size < 1 {
+            return false;
+        }
         match file.file_type {
             FileType::Document => true,
             FileType::Audio(_) => false,

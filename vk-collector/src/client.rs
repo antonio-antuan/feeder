@@ -1,5 +1,8 @@
 use crate::throttler::{Throttler, Worker};
-use crate::types::{Group, JobGroupSearch, JobWallGet, WallItem, JobGroupsGetById, ItemsWithCountResponse, JobGroupsGet};
+use crate::types::{
+    Group, ItemsWithCountResponse, JobGroupSearch, JobGroupsGet, JobGroupsGetById, JobWallGet,
+    WallItem,
+};
 use crate::{
     result,
     types::{Job, VkResponse},
@@ -23,14 +26,17 @@ pub struct VkClient {
 impl VkClient {
     pub fn new(token: &str, client: Client, max_tasks_per_tick: usize, secs_tick: u64) -> Self {
         let worker = JobsWorker::new(client, token.to_string(), 3);
-        let mut throttler = Throttler::new(tokio::time::Duration::from_secs(secs_tick), Arc::new(worker));
+        let mut throttler = Throttler::new(
+            tokio::time::Duration::from_secs(secs_tick),
+            Arc::new(worker),
+        );
         let handle_run = throttler.run(max_tasks_per_tick);
 
         let (s, mut r) = sync::mpsc::channel(100);
         let handle_push = tokio::spawn(async move {
-            if let Some(job) = r.recv().await {
+            while let Some(job) = r.recv().await {
                 throttler.push(job).await;
-            };
+            }
         });
         let handle = tokio::spawn(async move {
             tokio::select! {
@@ -44,20 +50,13 @@ impl VkClient {
         }
     }
 
-    pub async fn get_my_groups(
-        &self,
-        offset: u32,
-        count: u16
-    ) -> result::Result<Vec<Group>> {
+    pub async fn get_my_groups(&self, offset: u32, count: u16) -> result::Result<Vec<Group>> {
         let (job, res) = JobGroupsGet::create(None, None, offset, count);
         self.jobs_sender.send(Job::GroupsGet(job)).await?;
         res.await?
     }
 
-    pub async fn get_groups_by_ids(
-        &self,
-        group_ids: Vec<String>,
-    ) -> result::Result<Vec<Group>> {
+    pub async fn get_groups_by_ids(&self, group_ids: Vec<String>) -> result::Result<Vec<Group>> {
         let (job, res) = JobGroupsGetById::create(group_ids.join(","), None);
         self.jobs_sender.send(Job::GroupsGetById(job)).await?;
         res.await?
@@ -74,12 +73,7 @@ impl VkClient {
         res.await?
     }
 
-    pub async fn search_group(
-        &self,
-        q: &str,
-        offset: u8,
-        limit: u8,
-    ) -> result::Result<Vec<Group>> {
+    pub async fn search_group(&self, q: &str, offset: u8, limit: u8) -> result::Result<Vec<Group>> {
         let (job, res) = JobGroupSearch::create(q.to_string(), offset, limit);
         self.jobs_sender.send(Job::GroupSearch(job)).await?;
         res.await?

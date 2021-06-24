@@ -10,7 +10,7 @@ edition = "2018"
 tokio = {version = "1", features = ["full"]}
 
 
-rust-tdlib = { git = "https://github.com/aCLr/rust-tdlib.git", branch = "state-changes" }
+rust-tdlib = "0.3.0"
 futures = "0.3.7"
 futures-util = "0.3.7"
 
