@@ -1,6 +1,7 @@
 use diesel::insert_into;
 use diesel::prelude::*;
 use diesel::result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError};
+use rand;
 
 use crate::db::models::User;
 use crate::db::Pool;
@@ -8,6 +9,8 @@ use crate::result::Result;
 use crate::schema::users;
 
 use diesel::expression::functions::date_and_time::now;
+use rand::distributions::Alphanumeric;
+use rand::Rng;
 use tokio_diesel::*;
 
 pub async fn get_user_by_token(db_pool: &Pool, token: String) -> Result<Option<User>> {
@@ -22,10 +25,19 @@ pub async fn get_user_by_token(db_pool: &Pool, token: String) -> Result<Option<U
     }
 }
 
+pub fn generate_token() -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect()
+}
+
 pub async fn create_user(db_pool: &Pool, login: String, hashed_password: String) -> Result<User> {
     match insert_into(users::table)
         .values((
             users::login.eq(login),
+            users::token.eq(generate_token()),
             users::password.eq(hashed_password),
             users::last_read_date.eq(now),
         ))

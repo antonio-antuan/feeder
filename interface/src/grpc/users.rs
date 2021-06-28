@@ -1,8 +1,10 @@
 use super::pb::users;
 use crate::auth;
-use crate::db::queries::users as users_queries;
+use crate::db::queries::{folders as folders_queries, users as users_queries};
 use crate::db::Pool;
 use std::convert::TryInto;
+
+const BASE_FOLDER: &str = "BASE";
 
 #[derive(Clone)]
 pub struct Service {
@@ -34,9 +36,12 @@ impl users::users_service_server::UsersService for Service {
         request: tonic::Request<users::RegisterRequest>,
     ) -> Result<tonic::Response<users::RegisterResponse>, tonic::Status> {
         let message: users::RegisterRequest = request.into_inner();
+        log::info!("{:?}", message);
         let password = auth::hash(message.password.as_str());
         let user =
             users_queries::create_user(&self.db_pool, message.login.clone(), password).await?;
+        folders_queries::add_user_folder(&self.db_pool, user.id, BASE_FOLDER.to_string(), None)
+            .await?;
         Ok(tonic::Response::new(users::RegisterResponse {
             user: Some(user.try_into()?),
         }))

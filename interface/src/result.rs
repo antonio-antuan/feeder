@@ -31,7 +31,7 @@ impl From<DBError> for Error {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
                     return Error::BadRequest(message);
                 };
-                log::error!("{:?}", error);
+                log::error!("{}", error);
                 Error::InternalServerError("Unknown database error".into())
             }
             DBError::NotFound => Error::NotFound("object not found".into()),
