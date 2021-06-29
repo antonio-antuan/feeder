@@ -199,16 +199,14 @@ where
     }
 
     fn file_may_be_download(&self, file: &TelegramFileWithMeta) -> bool {
-        if self.max_download_queue_size < 1 {
-            return false;
-        }
-        match file.file_type {
-            FileType::Document => true,
-            FileType::Audio(_) => false,
-            FileType::Video(_) => false,
-            FileType::Animation(_) => true,
-            FileType::Image(_) => true,
-        }
+        return false;
+        // match file.file_type {
+        //     FileType::Document => true,
+        //     FileType::Audio(_) => false,
+        //     FileType::Video(_) => false,
+        //     FileType::Animation(_) => true,
+        //     FileType::Image(_) => true,
+        // }
     }
 
     pub(super) async fn handle_file_downloaded(&self, file: &TelegramFile) -> Result<()> {

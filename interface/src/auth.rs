@@ -11,7 +11,7 @@ pub fn hash(password: &str) -> String {
 
 pub async fn login_user(db_pool: &Pool, login: &str, password: &str) -> Result<User> {
     let user = users_queries::get_user_by_login(db_pool, login.to_string()).await?;
-    match check_password(password, user.password()) {
+    match check_password(password, user.password.as_str()) {
         true => Ok(user),
         false => Err(crate::result::Error::Unauthorized(
             "invalid password".to_string(),

@@ -15,7 +15,7 @@ impl TryFrom<crate::db::models::User> for users::User {
                 Error::InternalServerError(format!("cannot convert date: {}", user.last_read_date))
             })?,
             login: user.login,
-            token: "".to_string(),
+            token: user.token.unwrap_or("".to_string()).clone(),
         })
     }
 }
