@@ -1,14 +1,7 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "pg-storage")]
-use {
-    crate::storage::schema::sources,
-    diesel::{Insertable, Queryable},
-};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "pg-storage", derive(Queryable))]
+#[derive(sqlx::FromRow, Debug, Clone, Serialize, Deserialize)]
 pub struct Source {
     pub id: i32,
     pub name: String,
@@ -19,9 +12,7 @@ pub struct Source {
     pub external_link: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "pg-storage", derive(Insertable))]
-#[cfg_attr(feature = "pg-storage", table_name = "sources")]
+#[derive(sqlx::FromRow, Debug, Clone, Serialize, Deserialize)]
 pub struct NewSource {
     pub name: String,
     pub origin: String,

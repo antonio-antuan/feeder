@@ -95,7 +95,7 @@ where
     S: Storage + Send + Sync + Clone + 'static,
 {
     sleep_secs: u64,
-    scrape_source_secs_interval: i32,
+    scrape_source_secs_interval: u64,
     storage: Option<S>,
 }
 
@@ -124,7 +124,7 @@ where
         self
     }
 
-    pub fn with_scrape_source_secs_interval(mut self, scrape_source_secs_interval: i32) -> Self {
+    pub fn with_scrape_source_secs_interval(mut self, scrape_source_secs_interval: u64) -> Self {
         self.scrape_source_secs_interval = scrape_source_secs_interval;
         self
     }
@@ -152,7 +152,7 @@ where
     S: Storage + Send + Sync + Clone + 'static,
 {
     sleep_secs: u64,
-    scrape_source_secs_interval: i32,
+    scrape_source_secs_interval: u64,
     collector: Arc<HttpCollector<CacheStub>>,
     storage: S,
 }
@@ -300,13 +300,13 @@ where
 
 async fn sources_gen<S: Storage>(
     storage: S,
-    source_check_period: i32,
+    source_check_period: u64,
     sleep_period: u64,
     sender: mpsc::Sender<Vec<(Option<FeedKind>, String)>>,
 ) {
     let sleep_period = Duration::from_secs(sleep_period);
     loop {
-        match get_sources(&storage, &source_check_period).await {
+        match get_sources(&storage, source_check_period).await {
             Ok(sources) => {
                 debug!("found sources for scrape: {:?}", sources);
                 if let Err(err) = sender.send(sources).await {
@@ -323,7 +323,7 @@ async fn sources_gen<S: Storage>(
 
 async fn get_sources<S: Storage>(
     storage: &S,
-    source_check_period_secs: &i32,
+    source_check_period_secs: u64,
 ) -> Result<Vec<(Option<FeedKind>, String)>> {
     Ok(storage
         .get_sources_by_kind_for_scrape(WEB.to_string(), source_check_period_secs)

@@ -2,11 +2,7 @@ use crate::models;
 use crate::result::Result;
 use async_trait::async_trait;
 
-#[cfg(feature = "pg-storage")]
 pub mod pg;
-
-#[cfg(feature = "pg-storage")]
-pub mod schema;
 
 #[async_trait]
 pub trait Storage {
@@ -19,7 +15,7 @@ pub trait Storage {
         source_record_id: String,
         source_id: i32,
         external_link: String,
-    ) -> Result<usize>;
+    ) -> Result<u64>;
     async fn save_records(&self, records: Vec<models::NewRecord>) -> Result<Vec<models::Record>>;
 
     async fn set_source_scraped_now(&self, source: models::Source) -> Result<()>;
@@ -33,7 +29,7 @@ pub trait Storage {
     async fn get_sources_by_kind_for_scrape(
         &self,
         kind: String,
-        check_secs_interval: &i32,
+        check_secs_interval: u64,
     ) -> Result<Vec<models::Source>>;
     async fn save_sources(&self, sources: Vec<models::NewSource>) -> Result<Vec<models::Source>>;
 }

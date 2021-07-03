@@ -34,7 +34,7 @@ impl Default for AppConfig {
 pub struct VkConfig {
     enabled: bool,
     sleep_secs: u64,
-    scrape_source_secs_interval: i32,
+    scrape_source_secs_interval: u64,
     token: String,
 }
 
@@ -45,7 +45,7 @@ impl VkConfig {
     pub fn sleep_secs(&self) -> u64 {
         self.sleep_secs
     }
-    pub fn scrape_source_secs_interval(&self) -> i32 {
+    pub fn scrape_source_secs_interval(&self) -> u64 {
         self.scrape_source_secs_interval
     }
     pub fn token(&self) -> &str {

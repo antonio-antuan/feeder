@@ -32,7 +32,6 @@ features = ["derive"]
 
 [dependencies.feeder]
 path = "../feeder"
-features = ["pg-storage"]
 
 [dependencies.derive_more]
 version = "0.99.11"
