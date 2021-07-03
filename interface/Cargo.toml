@@ -24,7 +24,7 @@ tg-collector = { path = "../tg-collector" }
 clap = "2.3.33"
 
 diesel_migrations = "1.4.0"
-pbkdf2 = "*"
+pbkdf2 = "0.6.0"
 
 [dependencies.serde]
 version = "1.0"

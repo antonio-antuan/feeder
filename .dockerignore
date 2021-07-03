@@ -1,0 +1,12 @@
+.idea
+Cargo.lock
+**/**/tdlib
+target
+docker-compose.yaml
+config
+Dockerfile
+docker
+.gitignore
+README.md
+Makefile
+LICENSE
