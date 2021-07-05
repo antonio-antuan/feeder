@@ -1,5 +1,13 @@
 use reqwest::Client;
+use sea_query::Iden;
 use vk_collector::client::VkClient;
+
+#[derive(Debug, Iden)]
+pub struct Foo {
+    id: i32,
+    name: String,
+    value: Option<i32>,
+}
 
 #[tokio::main]
 async fn main() {

@@ -1,8 +1,5 @@
 use crate::throttler::{Throttler, Worker};
-use crate::types::{
-    Group, ItemsWithCountResponse, JobGroupSearch, JobGroupsGet, JobGroupsGetById, JobWallGet,
-    WallItem,
-};
+use crate::types::{Group, JobGroupSearch, JobGroupsGet, JobGroupsGetById, JobWallGet, WallItem};
 use crate::{
     result,
     types::{Job, VkResponse},
@@ -15,7 +12,6 @@ use tokio::{sync, task::JoinHandle};
 
 const BASE_URL: &str = "https://api.vk.com";
 const API_VERSION: &str = "5.21";
-const MAX_RPS: usize = 3;
 
 #[derive(Debug, Clone)]
 pub struct VkClient {

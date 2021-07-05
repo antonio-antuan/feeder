@@ -13,7 +13,7 @@ pub struct Record {
     pub external_link: String,
 }
 
-#[derive(sqlx::FromRow, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NewRecord {
     pub title: Option<String>,
     // TODO: add date, modify date (for app, not for source)

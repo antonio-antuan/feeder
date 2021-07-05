@@ -21,7 +21,7 @@ impl records::records_service_server::RecordsService for Service {
     ) -> Result<tonic::Response<records::GetRecordsListResponse>, tonic::Status> {
         let user = super::auth_user(&self.db_pool, request.metadata()).await?;
         let message: records::GetRecordsListRequest = request.into_inner();
-        let records = records_queries::get_all_records(
+        let records = records_queries::get_records(
             &self.db_pool,
             user.id,
             match message.source_id {
@@ -47,7 +47,7 @@ impl records::records_service_server::RecordsService for Service {
     ) -> Result<tonic::Response<records::GetRecordsPreviewResponse>, tonic::Status> {
         let message = request.into_inner();
         let records =
-            records_queries::get_filtered(&self.db_pool, message.source_id, 20, 0).await?;
+            records_queries::get_by_source_id(&self.db_pool, message.source_id, 20, 0).await?;
         Ok(tonic::Response::new(records::GetRecordsPreviewResponse {
             records: records
                 .into_iter()

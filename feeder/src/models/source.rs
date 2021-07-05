@@ -12,7 +12,7 @@ pub struct Source {
     pub external_link: String,
 }
 
-#[derive(sqlx::FromRow, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NewSource {
     pub name: String,
     pub origin: String,

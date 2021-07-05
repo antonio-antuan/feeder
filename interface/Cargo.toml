@@ -8,14 +8,12 @@ edition = "2018"
 
 [dependencies]
 lazy_static = "1.4"
-diesel = { version = "*", features = ["chrono", "postgres"] }
 tokio = { version = "1", features = ["full"] }
 prost = "*"
 prost-types = "*" # Contains definitions of Protocol Buffers well-known types
 tonic = {version = "*"}
 rand = "*"
 chrono = { version = "*", features = ["serde"] }
-tokio-diesel = { git = "https://github.com/mehcode/tokio-diesel.git", rev = "f4af425" }
 env_logger = "*"
 async-trait = "*"
 log = "*"
@@ -23,7 +21,7 @@ futures = "*"
 tg-collector = { path = "../tg-collector" }
 clap = "2.3.33"
 
-diesel_migrations = "1.4.0"
+sql-builder = "3.1.1"
 pbkdf2 = "0.6.0"
 
 [dependencies.serde]
@@ -43,3 +41,7 @@ features = ["yaml"]
 
 [build-dependencies]
 tonic-build = "0.4"
+
+[dependencies.sqlx]
+version = "0.5.5"
+features = ["postgres", "runtime-tokio-rustls", "macros", "chrono"]

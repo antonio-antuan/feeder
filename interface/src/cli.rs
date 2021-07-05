@@ -130,7 +130,7 @@ pub async fn run() {
             ])
         );
 
-    let app = init::build_app();
+    let app = init::build_app().await;
     let matches = cli_app.clone().get_matches();
 
     // TODO: app (tg source) must start without background
@@ -162,11 +162,10 @@ pub async fn run() {
                     .map(|v| v.parse().expect("invalid source id"))
                     .unwrap_or(0);
                 let pool = app.storage().pool();
-                let found = queries::records::get_all_records(
-                    &pool, user_id, source_id, None, limit, offset,
-                )
-                .await
-                .expect("can't get records");
+                let found =
+                    queries::records::get_records(&pool, user_id, source_id, None, limit, offset)
+                        .await
+                        .expect("can't get records");
                 println!("{:?}", found);
             }
 
@@ -208,7 +207,7 @@ pub async fn run() {
             }
             ("list", Some(list_sub_cmd)) => {
                 let user_id = parse_arg!(list_sub_cmd, "user_id");
-                let list = queries::sources::get_list(&app.storage().pool(), user_id).await;
+                let list = queries::sources::get_for_user(&app.storage().pool(), user_id).await;
                 println!("{:?}", list);
             }
             ("move_to_folder", Some(move_to_folder_cmd)) => {
@@ -241,7 +240,7 @@ pub async fn run() {
                 queries::sources::subscribe(&db_pool, source_id, user_id)
                     .await
                     .expect("subscription failed");
-                queries::sources::get_list(&db_pool, user_id)
+                queries::sources::get_for_user(&db_pool, user_id)
                     .await
                     .map(|v| v.into_iter().find(|s| s.id == source_id))
                     .expect("subscription failed")

@@ -55,8 +55,8 @@ fn init_app_config() -> config::AppConfig {
 
 pub type App = Arc<AggApp<PgStorage>>;
 
-pub fn build_app() -> App {
-    let db_pool = db::init_pool(settings::SETTINGS.database.url.as_str());
+pub async fn build_app() -> App {
+    let db_pool = db::init_pool(settings::SETTINGS.database.url.as_str()).await;
     let storage = PgStorage::new(db_pool.clone());
     let app_config = init_app_config();
     Arc::new(

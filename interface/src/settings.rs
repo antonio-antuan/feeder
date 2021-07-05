@@ -47,7 +47,7 @@ pub struct TgCollector {
 pub struct VkCollector {
     pub enabled: bool,
     pub sleep_secs: u64,
-    pub scrape_source_secs_interval: i32,
+    pub scrape_source_secs_interval: u64,
     pub token: String,
 }
 

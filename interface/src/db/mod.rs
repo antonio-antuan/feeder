@@ -1,23 +1,18 @@
 pub mod models;
 pub mod queries;
+use sqlx::postgres::{PgPool, PgPoolOptions};
 
-use diesel::{
-    prelude::*,
-    r2d2::{ConnectionManager, Pool as _Pool},
-};
-pub type Pool = _Pool<ConnectionManager<PgConnection>>;
+pub type Pool = PgPool;
 
-pub fn init_pool(db_url: &str) -> Pool {
-    let manager = ConnectionManager::<PgConnection>::new(db_url);
-    Pool::builder()
-        .build(manager)
+pub async fn init_pool(db_url: &str) -> Pool {
+    PgPoolOptions::new()
+        .max_connections(5)
+        .connect(db_url)
+        .await
         .expect("can't initialize pool")
 }
 
-embed_migrations!();
-
-pub fn migrate(pool: Pool) -> Result<(), diesel_migrations::RunMigrationsError> {
-    let connection = pool.get().expect("can't get connection from pool");
-    embedded_migrations::run(&connection)?;
+pub fn migrate(pool: Pool) -> crate::result::Result<()> {
+    // TODO
     Ok(())
 }

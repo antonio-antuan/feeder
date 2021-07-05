@@ -157,7 +157,9 @@ impl JobGroupsGet {
     }
 
     pub fn set_result(self, result: result::Result<Vec<Group>>) {
-        self.results_sender.send(result);
+        if let Err(_) = self.results_sender.send(result) {
+            log::error!("channel closed");
+        }
     }
 }
 pub(crate) struct GroupsGetByIdParameters {

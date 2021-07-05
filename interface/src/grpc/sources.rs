@@ -26,7 +26,7 @@ impl sources::sources_service_server::SourcesService for Service {
         request: tonic::Request<sources::GetSourcesListRequest>,
     ) -> Result<tonic::Response<sources::GetSourcesListResponse>, tonic::Status> {
         let user = super::auth_user(&self.db_pool, request.metadata()).await?;
-        let sources = sources_queries::get_list(&self.db_pool, user.id).await?;
+        let sources = sources_queries::get_for_user(&self.db_pool, user.id).await?;
         Ok(tonic::Response::new(sources::GetSourcesListResponse {
             sources: sources.into_iter().map(From::from).collect(),
         }))
