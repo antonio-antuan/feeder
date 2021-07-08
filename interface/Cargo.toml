@@ -11,7 +11,7 @@ lazy_static = "1.4"
 tokio = { version = "1", features = ["full"] }
 prost = "*"
 prost-types = "*" # Contains definitions of Protocol Buffers well-known types
-tonic = {version = "*"}
+tonic = "0.5.0"
 rand = "*"
 chrono = { version = "*", features = ["serde"] }
 env_logger = "*"
@@ -38,10 +38,6 @@ version = "0.99.11"
 [dependencies.config]
 version = "0.9"
 features = ["yaml"]
-
-
-[build-dependencies]
-tonic-build = "0.4"
 
 [dependencies.sqlx]
 version = "0.5.5"

@@ -17,17 +17,19 @@ pub async fn add_user_folder(
     user_id: i32,
     name: String,
     parent_folder_id: Option<i32>,
-) -> Result<()> {
-    sqlx::query!(
-        "INSERT INTO user_folders (name, user_id, parent_folder) VALUES ($1, $2, $3) \
-        ON CONFLICT (name, user_id) DO UPDATE SET parent_folder = EXCLUDED.parent_folder",
+) -> Result<i32> {
+    let rec = sqlx::query!(
+        r#"INSERT INTO user_folders (name, user_id, parent_folder_id) VALUES ($1, $2, $3) 
+        ON CONFLICT (name, user_id) DO UPDATE SET parent_folder_id = EXCLUDED.parent_folder_id
+        RETURNING id
+        "#,
         name,
         user_id,
         parent_folder_id
     )
-    .execute(db_pool)
+    .fetch_one(db_pool)
     .await?;
-    Ok(())
+    Ok(rec.id)
 }
 
 pub async fn remove_user_folder(db_pool: &Pool, user_id: i32, folder_id: i32) -> Result<()> {

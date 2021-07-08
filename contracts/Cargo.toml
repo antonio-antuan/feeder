@@ -7,5 +7,5 @@ edition = "2018"
 
 [dependencies]
 clap = "2.3.33"
-tonic-build = "0.4.2"
+tonic-build = "0.5.0"
 anyhow = "1.0.41"

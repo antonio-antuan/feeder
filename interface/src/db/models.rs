@@ -40,5 +40,5 @@ pub struct UserFolder {
     pub id: i32,
     pub name: String,
     pub user_id: i32,
-    pub parent_folder: Option<i32>,
+    pub parent_folder_id: Option<i32>,
 }

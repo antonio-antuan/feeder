@@ -83,6 +83,17 @@ pub async fn mark_record(
         .unwrap())
 }
 
+pub async fn get_tags(db_pool: &Pool, user_id: i32, record_id: i32) -> Result<Vec<String>> {
+    let record = sqlx::query!(
+        "SELECT array_agg(tag) as tags FROM record_tags WHERE user_id = $1 AND record_id = $2",
+        user_id,
+        record_id
+    )
+    .fetch_one(db_pool)
+    .await?;
+    Ok(record.tags.unwrap_or_default())
+}
+
 pub async fn add_tag(db_pool: &Pool, user_id: i32, record_id: i32, tag: String) -> Result<()> {
     sqlx::query!(
         r#"

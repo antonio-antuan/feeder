@@ -2,6 +2,7 @@ pub mod records;
 pub mod sources;
 pub mod users;
 
+use crate::db::models::UserFolder;
 use crate::result::{Error, Result};
 use std::convert::{TryFrom, TryInto};
 
@@ -53,6 +54,7 @@ impl From<crate::db::models::SourceWithMeta> for sources::SourceWithMeta {
     }
 }
 
+// we can't use `impl From` because all types are external. Adapter is the simplest way.
 pub fn adapt_source(source: feeder::models::Source) -> sources::Source {
     sources::Source {
         id: source.id,
@@ -62,5 +64,15 @@ pub fn adapt_source(source: feeder::models::Source) -> sources::Source {
         image: source.image.unwrap_or_default(),
         last_scrape_time: source.last_scrape_time.timestamp(),
         external_link: source.external_link,
+    }
+}
+
+impl From<crate::db::models::UserFolder> for users::get_folders_response::Folder {
+    fn from(folder: UserFolder) -> Self {
+        Self {
+            id: folder.id,
+            name: folder.name,
+            parent_folder_id: folder.parent_folder_id.unwrap_or(0),
+        }
     }
 }

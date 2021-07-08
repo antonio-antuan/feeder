@@ -33,10 +33,49 @@ pub struct RegisterResponse {
     #[prost(message, optional, tag = "1")]
     pub user: ::core::option::Option<User>,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFoldersRequest {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetFoldersResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub folders: ::prost::alloc::vec::Vec<get_folders_response::Folder>,
+}
+/// Nested message and enum types in `GetFoldersResponse`.
+pub mod get_folders_response {
+    #[derive(Clone, PartialEq, ::prost::Message)]
+    pub struct Folder {
+        #[prost(int32, tag = "1")]
+        pub id: i32,
+        #[prost(string, tag = "2")]
+        pub name: ::prost::alloc::string::String,
+        #[prost(int32, tag = "3")]
+        pub parent_folder_id: i32,
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AddFolderRequest {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(int32, tag = "2")]
+    pub parent_folder_id: i32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AddFolderResponse {
+    #[prost(int32, tag = "1")]
+    pub id: i32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveFolderRequest {
+    #[prost(int32, tag = "1")]
+    pub id: i32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RemoveFolderResponse {}
 #[doc = r" Generated client implementations."]
 pub mod users_service_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
+    #[derive(Debug, Clone)]
     pub struct UsersServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
@@ -54,17 +93,43 @@ pub mod users_service_client {
     impl<T> UsersServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
-        T::ResponseBody: Body + HttpBody + Send + 'static,
+        T::ResponseBody: Body + Send + Sync + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = tonic::client::Grpc::with_interceptor(inner, interceptor);
-            Self { inner }
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> UsersServiceClient<InterceptedService<T, F>>
+        where
+            F: FnMut(tonic::Request<()>) -> Result<tonic::Request<()>, tonic::Status>,
+            T: Service<
+                http::Request<tonic::body::BoxBody>,
+                Response = http::Response<
+                    <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                >,
+            >,
+            <T as Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
+        {
+            UsersServiceClient::new(InterceptedService::new(inner, interceptor))
+        }
+        #[doc = r" Compress requests with `gzip`."]
+        #[doc = r""]
+        #[doc = r" This requires the server to support it otherwise it might respond with an"]
+        #[doc = r" error."]
+        pub fn send_gzip(mut self) -> Self {
+            self.inner = self.inner.send_gzip();
+            self
+        }
+        #[doc = r" Enable decompressing responses with `gzip`."]
+        pub fn accept_gzip(mut self) -> Self {
+            self.inner = self.inner.accept_gzip();
+            self
         }
         pub async fn login(
             &mut self,
@@ -94,17 +159,47 @@ pub mod users_service_client {
             let path = http::uri::PathAndQuery::from_static("/users.UsersService/Register");
             self.inner.unary(request.into_request(), path, codec).await
         }
-    }
-    impl<T: Clone> Clone for UsersServiceClient<T> {
-        fn clone(&self) -> Self {
-            Self {
-                inner: self.inner.clone(),
-            }
+        pub async fn get_folders(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetFoldersRequest>,
+        ) -> Result<tonic::Response<super::GetFoldersResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/users.UsersService/GetFolders");
+            self.inner.unary(request.into_request(), path, codec).await
         }
-    }
-    impl<T> std::fmt::Debug for UsersServiceClient<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "UsersServiceClient {{ ... }}")
+        pub async fn add_folder(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AddFolderRequest>,
+        ) -> Result<tonic::Response<super::AddFolderResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/users.UsersService/AddFolder");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn remove_folder(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RemoveFolderRequest>,
+        ) -> Result<tonic::Response<super::RemoveFolderResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/users.UsersService/RemoveFolder");
+            self.inner.unary(request.into_request(), path, codec).await
         }
     }
 }
@@ -123,28 +218,47 @@ pub mod users_service_server {
             &self,
             request: tonic::Request<super::RegisterRequest>,
         ) -> Result<tonic::Response<super::RegisterResponse>, tonic::Status>;
+        async fn get_folders(
+            &self,
+            request: tonic::Request<super::GetFoldersRequest>,
+        ) -> Result<tonic::Response<super::GetFoldersResponse>, tonic::Status>;
+        async fn add_folder(
+            &self,
+            request: tonic::Request<super::AddFolderRequest>,
+        ) -> Result<tonic::Response<super::AddFolderResponse>, tonic::Status>;
+        async fn remove_folder(
+            &self,
+            request: tonic::Request<super::RemoveFolderRequest>,
+        ) -> Result<tonic::Response<super::RemoveFolderResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct UsersServiceServer<T: UsersService> {
         inner: _Inner<T>,
+        accept_compression_encodings: (),
+        send_compression_encodings: (),
     }
-    struct _Inner<T>(Arc<T>, Option<tonic::Interceptor>);
+    struct _Inner<T>(Arc<T>);
     impl<T: UsersService> UsersServiceServer<T> {
         pub fn new(inner: T) -> Self {
             let inner = Arc::new(inner);
-            let inner = _Inner(inner, None);
-            Self { inner }
+            let inner = _Inner(inner);
+            Self {
+                inner,
+                accept_compression_encodings: Default::default(),
+                send_compression_encodings: Default::default(),
+            }
         }
-        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
-            let inner = Arc::new(inner);
-            let inner = _Inner(inner, Some(interceptor.into()));
-            Self { inner }
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
+        where
+            F: FnMut(tonic::Request<()>) -> Result<tonic::Request<()>, tonic::Status>,
+        {
+            InterceptedService::new(Self::new(inner), interceptor)
         }
     }
     impl<T, B> Service<http::Request<B>> for UsersServiceServer<T>
     where
         T: UsersService,
-        B: HttpBody + Send + Sync + 'static,
+        B: Body + Send + Sync + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
         type Response = http::Response<tonic::body::BoxBody>;
@@ -171,17 +285,17 @@ pub mod users_service_server {
                             Box::pin(fut)
                         }
                     }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let interceptor = inner.1.clone();
                         let inner = inner.0;
                         let method = LoginSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = if let Some(interceptor) = interceptor {
-                            tonic::server::Grpc::with_interceptor(codec, interceptor)
-                        } else {
-                            tonic::server::Grpc::new(codec)
-                        };
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
@@ -202,17 +316,112 @@ pub mod users_service_server {
                             Box::pin(fut)
                         }
                     }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let interceptor = inner.1.clone();
                         let inner = inner.0;
                         let method = RegisterSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = if let Some(interceptor) = interceptor {
-                            tonic::server::Grpc::with_interceptor(codec, interceptor)
-                        } else {
-                            tonic::server::Grpc::new(codec)
-                        };
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/users.UsersService/GetFolders" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetFoldersSvc<T: UsersService>(pub Arc<T>);
+                    impl<T: UsersService> tonic::server::UnaryService<super::GetFoldersRequest> for GetFoldersSvc<T> {
+                        type Response = super::GetFoldersResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetFoldersRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).get_folders(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetFoldersSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/users.UsersService/AddFolder" => {
+                    #[allow(non_camel_case_types)]
+                    struct AddFolderSvc<T: UsersService>(pub Arc<T>);
+                    impl<T: UsersService> tonic::server::UnaryService<super::AddFolderRequest> for AddFolderSvc<T> {
+                        type Response = super::AddFolderResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::AddFolderRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).add_folder(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = AddFolderSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/users.UsersService/RemoveFolder" => {
+                    #[allow(non_camel_case_types)]
+                    struct RemoveFolderSvc<T: UsersService>(pub Arc<T>);
+                    impl<T: UsersService> tonic::server::UnaryService<super::RemoveFolderRequest>
+                        for RemoveFolderSvc<T>
+                    {
+                        type Response = super::RemoveFolderResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RemoveFolderRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).remove_folder(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = RemoveFolderSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
                         let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
@@ -223,7 +432,7 @@ pub mod users_service_server {
                         .status(200)
                         .header("grpc-status", "12")
                         .header("content-type", "application/grpc")
-                        .body(tonic::body::BoxBody::empty())
+                        .body(empty_body())
                         .unwrap())
                 }),
             }
@@ -232,12 +441,16 @@ pub mod users_service_server {
     impl<T: UsersService> Clone for UsersServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
-            Self { inner }
+            Self {
+                inner,
+                accept_compression_encodings: self.accept_compression_encodings,
+                send_compression_encodings: self.send_compression_encodings,
+            }
         }
     }
     impl<T: UsersService> Clone for _Inner<T> {
         fn clone(&self) -> Self {
-            Self(self.0.clone(), self.1.clone())
+            Self(self.0.clone())
         }
     }
     impl<T: std::fmt::Debug> std::fmt::Debug for _Inner<T> {

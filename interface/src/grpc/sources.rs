@@ -1,8 +1,10 @@
 use super::pb::{adapt_source, sources};
 use crate::db::queries::sources as sources_queries;
 use crate::db::Pool;
+use crate::grpc::pb::sources::{MoveToFolderRequest, MoveToFolderResponse};
 use crate::init::App;
 use feeder::result::Error;
+use tonic::{Request, Response, Status};
 
 #[derive(Clone)]
 pub struct Service {
@@ -74,5 +76,21 @@ impl sources::sources_service_server::SourcesService for Service {
         sources_queries::unsubscribe(&self.db_pool, request.into_inner().source_id, user.id)
             .await?;
         Ok(tonic::Response::new(sources::UnsubscribeResponse {}))
+    }
+
+    async fn move_to_folder(
+        &self,
+        request: Request<MoveToFolderRequest>,
+    ) -> Result<Response<MoveToFolderResponse>, Status> {
+        let user = super::auth_user(&self.db_pool, request.metadata()).await?;
+        let message: MoveToFolderRequest = request.into_inner();
+        sources_queries::move_to_folder(
+            &self.db_pool,
+            user.id,
+            message.source_id,
+            message.folder_id,
+        )
+        .await?;
+        Ok(tonic::Response::new(sources::MoveToFolderResponse {}))
     }
 }

@@ -3,14 +3,26 @@ package records;
 
 service RecordsService {
     rpc GetRecordsList(GetRecordsListRequest) returns (GetRecordsListResponse) {
+
     }
 
     rpc GetRecordsPreview(GetRecordsPreviewRequest) returns (GetRecordsPreviewResponse) {
+
     }
 
     rpc MarkRecord(MarkRecordRequest) returns (MarkRecordResponse) {
+
+    }
+
+    rpc AddRecordTag(AddRecordTagRequest) returns (AddRecordTagResponse) {
+
+    }
+
+    rpc RemoveRecordTag(RemoveRecordTagRequest) returns (RemoveRecordTagResponse) {
+
     }
 }
+
 
 message Record {
     int32 id = 1;
@@ -61,4 +73,22 @@ message MarkRecordRequest {
 
 message MarkRecordResponse {
     RecordWithMeta record = 1;
+}
+
+message AddRecordTagRequest {
+    int32 record_id = 1;
+    string tag = 2;
+}
+
+message AddRecordTagResponse {
+    repeated string tags = 1;
+}
+
+message RemoveRecordTagRequest {
+    int32 record_id = 1;
+    string tag = 2;
+}
+
+message RemoveRecordTagResponse {
+    repeated string tags = 1;
 }

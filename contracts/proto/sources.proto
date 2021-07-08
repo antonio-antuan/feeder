@@ -3,9 +3,11 @@ package sources;
 
 service SourcesService {
     rpc GetSourcesList(GetSourcesListRequest) returns (GetSourcesListResponse) {
+
     }
 
     rpc SearchSources(SearchSourcesRequest) returns (SearchSourcesResponse) {
+
     }
 
     rpc Subscribe(SubscribeRequest) returns (SubscribeResponse) {
@@ -13,6 +15,10 @@ service SourcesService {
     }
 
     rpc Unsubscribe(UnsubscribeRequest) returns (UnsubscribeResponse) {
+
+    }
+
+    rpc MoveToFolder(MoveToFolderRequest) returns (MoveToFolderResponse) {
 
     }
 }
@@ -67,5 +73,14 @@ message UnsubscribeRequest {
 }
 
 message UnsubscribeResponse {
+
+}
+
+message MoveToFolderRequest {
+    int32 source_id = 1;
+    int32 folder_id = 2;
+}
+
+message MoveToFolderResponse {
 
 }

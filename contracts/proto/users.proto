@@ -9,6 +9,16 @@ service UsersService {
 
     rpc Register(RegisterRequest) returns (RegisterResponse) {
     }
+
+    rpc GetFolders(GetFoldersRequest) returns (GetFoldersResponse) {
+    }
+
+    rpc AddFolder(AddFolderRequest) returns (AddFolderResponse) {
+    }
+
+    rpc RemoveFolder(RemoveFolderRequest) returns (RemoveFolderResponse) {
+
+    }
 }
 
 message User {
@@ -37,3 +47,31 @@ message RegisterResponse {
     User user = 1;
 }
 
+message GetFoldersRequest {
+}
+
+message GetFoldersResponse {
+    message Folder {
+        int32 id = 1;
+        string name = 2;
+        int32 parent_folder_id = 3;
+    }
+    repeated Folder folders = 1;
+}
+
+
+message AddFolderRequest {
+    string name = 1;
+    int32 parent_folder_id = 2;
+}
+
+message AddFolderResponse {
+    int32 id = 1;
+}
+
+message RemoveFolderRequest {
+    int32 id = 1;
+}
+
+message RemoveFolderResponse {
+}

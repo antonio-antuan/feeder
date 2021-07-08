@@ -1,6 +1,10 @@
 use super::pb::records;
 use crate::db::queries::records as records_queries;
 use crate::db::Pool;
+use crate::grpc::pb::records::{
+    AddRecordTagRequest, AddRecordTagResponse, RemoveRecordTagRequest, RemoveRecordTagResponse,
+};
+use tonic::{Request, Response, Status};
 
 #[derive(Clone)]
 pub struct Service {
@@ -79,6 +83,30 @@ impl records::records_service_server::RecordsService for Service {
         .await?;
         Ok(tonic::Response::new(records::MarkRecordResponse {
             record: Some(record.into()),
+        }))
+    }
+
+    async fn add_record_tag(
+        &self,
+        request: Request<AddRecordTagRequest>,
+    ) -> Result<Response<AddRecordTagResponse>, Status> {
+        let user = super::auth_user(&self.db_pool, request.metadata()).await?;
+        let message: records::AddRecordTagRequest = request.into_inner();
+        records_queries::add_tag(&self.db_pool, user.id, message.record_id, message.tag).await?;
+        let tags = records_queries::get_tags(&self.db_pool, user.id, message.record_id).await?;
+        Ok(tonic::Response::new(records::AddRecordTagResponse { tags }))
+    }
+
+    async fn remove_record_tag(
+        &self,
+        request: Request<RemoveRecordTagRequest>,
+    ) -> Result<Response<RemoveRecordTagResponse>, Status> {
+        let user = super::auth_user(&self.db_pool, request.metadata()).await?;
+        let message: records::RemoveRecordTagRequest = request.into_inner();
+        records_queries::remove_tag(&self.db_pool, user.id, message.record_id, message.tag).await?;
+        let tags = records_queries::get_tags(&self.db_pool, user.id, message.record_id).await?;
+        Ok(tonic::Response::new(records::RemoveRecordTagResponse {
+            tags,
         }))
     }
 }
