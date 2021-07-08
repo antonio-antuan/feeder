@@ -2,6 +2,7 @@ use super::Storage;
 use crate::models;
 use crate::result::{Error, Result};
 use async_trait::async_trait;
+use sqlx::migrate::Migrator;
 use sqlx::postgres::PgPool;
 use std::time::Duration;
 
@@ -17,9 +18,8 @@ impl PgStorage {
         Self { pool }
     }
 
-    pub fn migrate(&self) -> Result<()> {
-        // TODO
-        Ok(())
+    pub async fn migrate(&self) {
+        migrate(&self.pool).await;
     }
 
     pub fn pool(&self) -> Pool {
@@ -198,4 +198,10 @@ impl From<sqlx::Error> for Error {
     fn from(err: sqlx::Error) -> Self {
         Self::DbError(err.to_string())
     }
+}
+
+static MIGRATOR: Migrator = sqlx::migrate!();
+
+async fn migrate(db_pool: &Pool) {
+    MIGRATOR.run(db_pool).await.expect("can't migrate");
 }

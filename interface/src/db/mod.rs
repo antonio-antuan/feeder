@@ -1,6 +1,9 @@
 pub mod models;
 pub mod queries;
-use sqlx::postgres::{PgPool, PgPoolOptions};
+use sqlx::{
+    migrate::Migrator,
+    postgres::{PgPool, PgPoolOptions},
+};
 
 pub type Pool = PgPool;
 
@@ -12,7 +15,10 @@ pub async fn init_pool(db_url: &str) -> Pool {
         .expect("can't initialize pool")
 }
 
-pub fn migrate(pool: Pool) -> crate::result::Result<()> {
-    // TODO
-    Ok(())
+pub async fn migrate(db_pool: Pool) {
+    sqlx::migrate!()
+        .set_ignore_missing(true)
+        .run(&db_pool)
+        .await
+        .expect("can't migrate");
 }

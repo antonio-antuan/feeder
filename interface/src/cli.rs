@@ -144,8 +144,8 @@ pub async fn run() {
 
     match matches.subcommand() {
         ("migrate", _) => {
-            app.storage().migrate().expect("migrations failed");
-            migrate(app.storage().pool()).expect("migrations failed");
+            app.storage().migrate().await;
+            migrate(app.storage().pool()).await;
         }
         ("articles", Some(articles_command)) => match articles_command.subcommand() {
             ("list", Some(list_command)) => {

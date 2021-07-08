@@ -20,6 +20,7 @@ log = "*"
 futures = "*"
 tg-collector = { path = "../tg-collector" }
 clap = "2.3.33"
+jsonwebtoken = "7"
 
 sql-builder = "3.1.1"
 pbkdf2 = "0.6.0"
@@ -44,4 +45,4 @@ tonic-build = "0.4"
 
 [dependencies.sqlx]
 version = "0.5.5"
-features = ["postgres", "runtime-tokio-rustls", "macros", "chrono"]
+features = ["postgres", "runtime-tokio-rustls", "macros", "chrono", "migrate"]

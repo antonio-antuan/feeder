@@ -1,1 +1,0 @@
-ALTER TABLE sources drop constraint unique_origin_kind;
