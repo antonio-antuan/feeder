@@ -1,9 +1,6 @@
 pub mod models;
 pub mod queries;
-use sqlx::{
-    migrate::Migrator,
-    postgres::{PgPool, PgPoolOptions},
-};
+use sqlx::postgres::{PgPool, PgPoolOptions};
 
 pub type Pool = PgPool;
 

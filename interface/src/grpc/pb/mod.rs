@@ -33,7 +33,7 @@ impl From<crate::db::models::RecordWithMeta> for records::RecordWithMeta {
                 image: record.image.unwrap_or_default(),
             }),
             starred: record.starred.map_or(false, |v| v),
-            tags: record.tags.into_iter().filter_map(|v| v).collect(),
+            tags: record.tags.unwrap_or_default(),
         }
     }
 }

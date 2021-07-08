@@ -2,7 +2,7 @@ use crate::db::models::RecordWithMeta;
 use crate::db::Pool;
 use crate::result::Result;
 use feeder::models::Record;
-use sql_builder::{SqlBuilder, SqlName};
+use sql_builder::SqlBuilder;
 
 pub async fn get_records(
     db_pool: &Pool,
@@ -12,19 +12,30 @@ pub async fn get_records(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<RecordWithMeta>> {
-    let mut query = SqlBuilder::select_from(sql_builder::name!("records", "r"));
+    let mut query = SqlBuilder::select_from("records as r");
     query
+        .fields(&[
+            "r.id",
+            "r.title",
+            "r.source_record_id as guid",
+            "r.source_id",
+            "r.content",
+            "r.date",
+            "r.image",
+            "coalesce(rus.starred, false) as starred",
+            "array_agg(rt.tag) filter(where rt.tag is not null) as tags",
+        ])
         .left()
-        .join(sql_builder::name!("records_user_settings", "rus"))
+        .join("records_user_settings as rus")
         .on("r.id = rus.record_id")
         .left()
-        .join(sql_builder::name!("record_tags", "rt"))
+        .join("record_tags as rt")
         .on("rt.user_id = rus.user_id AND rt.record_id = r.id")
         .left()
-        .join(sql_builder::name!("sources_user_settings", "sus"))
-        .on("sus.user_id = rus.user_id")
+        .join("sources_user_settings as sus")
+        .on("sus.source_id = r.source_id")
         .left()
-        .join(sql_builder::name!("sources", "s"))
+        .join("sources as s")
         .on("s.id = sus.source_id")
         .and_where_eq("sus.user_id", user_id)
         .group_by("r.id, rus.starred")

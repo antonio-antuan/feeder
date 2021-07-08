@@ -11,7 +11,7 @@ pub struct RecordWithMeta {
     pub date: NaiveDateTime,
     pub image: Option<String>,
     pub starred: Option<bool>,
-    pub tags: Vec<Option<String>>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, Clone, Debug)]

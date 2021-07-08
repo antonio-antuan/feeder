@@ -16,6 +16,17 @@ pub async fn unsubscribe(db_pool: &Pool, source_id: i32, user_id: i32) -> Result
     .await?;
     sqlx::query!(
         r#"
+    DELETE FROM user_source_to_folder 
+    WHERE 
+        user_source_id IN (SELECT id FROM sources_user_settings WHERE source_id = $1 and user_id = $2)
+    "#,
+        source_id,
+        user_id
+    )
+    .execute(db_pool)
+    .await?;
+    sqlx::query!(
+        r#"
     DELETE FROM sources_user_settings 
     WHERE 
         source_id = $1 AND user_id = $2
