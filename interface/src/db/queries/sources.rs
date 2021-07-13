@@ -90,11 +90,19 @@ pub async fn move_to_folder(
     source_id: i32,
     folder_id: i32,
 ) -> Result<()> {
-    sqlx::query!(r#"
-    UPDATE user_source_to_folder
-    SET folder_id = $1
-    WHERE user_source_id = (SELECT id FROM sources_user_settings WHERE source_id = $2 AND user_id = $3 LIMIT 1)"#,
-    folder_id, source_id, user_id).execute(db_pool)
-        .await?;
+    sqlx::query!(
+        r#"
+    INSERT INTO user_source_to_folder (user_source_id, folder_id) 
+    
+        SELECT id, $3 FROM sources_user_settings WHERE source_id = $1 AND user_id = $2 LIMIT 1
+    
+    ON CONFLICT (user_source_id)
+    DO UPDATE SET folder_id=EXCLUDED.folder_id"#,
+        source_id,
+        user_id,
+        folder_id
+    )
+    .execute(db_pool)
+    .await?;
     Ok(())
 }
