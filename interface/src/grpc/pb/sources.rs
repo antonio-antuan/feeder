@@ -84,6 +84,27 @@ pub struct GetSourceByIdResponse {
     #[prost(message, optional, tag = "1")]
     pub source: ::core::option::Option<SourceWithMeta>,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchTagsRequest {
+    #[prost(string, tag = "1")]
+    pub search: ::prost::alloc::string::String,
+    #[prost(int32, tag = "2")]
+    pub limit: i32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchTagsResponse {
+    #[prost(string, repeated, tag = "1")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SetSourceTagsRequest {
+    #[prost(int32, tag = "1")]
+    pub source_id: i32,
+    #[prost(string, repeated, tag = "2")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SetSourceTagsResponse {}
 #[doc = r" Generated client implementations."]
 pub mod sources_service_client {
     #![allow(unused_variables, dead_code, missing_docs)]
@@ -231,6 +252,35 @@ pub mod sources_service_client {
             let path = http::uri::PathAndQuery::from_static("/sources.SourcesService/MoveToFolder");
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn search_tags(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SearchTagsRequest>,
+        ) -> Result<tonic::Response<super::SearchTagsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/sources.SourcesService/SearchTags");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn set_source_tags(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SetSourceTagsRequest>,
+        ) -> Result<tonic::Response<super::SetSourceTagsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/sources.SourcesService/SetSourceTags");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 #[doc = r" Generated server implementations."]
@@ -264,6 +314,14 @@ pub mod sources_service_server {
             &self,
             request: tonic::Request<super::MoveToFolderRequest>,
         ) -> Result<tonic::Response<super::MoveToFolderResponse>, tonic::Status>;
+        async fn search_tags(
+            &self,
+            request: tonic::Request<super::SearchTagsRequest>,
+        ) -> Result<tonic::Response<super::SearchTagsResponse>, tonic::Status>;
+        async fn set_source_tags(
+            &self,
+            request: tonic::Request<super::SetSourceTagsRequest>,
+        ) -> Result<tonic::Response<super::SetSourceTagsResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct SourcesServiceServer<T: SourcesService> {
@@ -491,6 +549,70 @@ pub mod sources_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = MoveToFolderSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/sources.SourcesService/SearchTags" => {
+                    #[allow(non_camel_case_types)]
+                    struct SearchTagsSvc<T: SourcesService>(pub Arc<T>);
+                    impl<T: SourcesService> tonic::server::UnaryService<super::SearchTagsRequest> for SearchTagsSvc<T> {
+                        type Response = super::SearchTagsResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SearchTagsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).search_tags(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = SearchTagsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/sources.SourcesService/SetSourceTags" => {
+                    #[allow(non_camel_case_types)]
+                    struct SetSourceTagsSvc<T: SourcesService>(pub Arc<T>);
+                    impl<T: SourcesService> tonic::server::UnaryService<super::SetSourceTagsRequest>
+                        for SetSourceTagsSvc<T>
+                    {
+                        type Response = super::SetSourceTagsResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SetSourceTagsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).set_source_tags(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = SetSourceTagsSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
                             accept_compression_encodings,

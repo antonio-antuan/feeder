@@ -106,3 +106,48 @@ pub async fn move_to_folder(
     .await?;
     Ok(())
 }
+
+pub async fn set_tags(
+    db_pool: &Pool,
+    user_id: i32,
+    source_id: i32,
+    tags: Vec<String>,
+) -> Result<()> {
+    let mut tx = db_pool.begin().await?;
+    sqlx::query!(
+        "DELETE FROM source_tags WHERE user_id=$1 AND source_id=$2",
+        user_id,
+        source_id
+    )
+    .execute(&mut tx)
+    .await?;
+    sqlx::query!(
+        "INSERT INTO source_tags (source_id, user_id, tag)  \
+        SELECT $1, $2, UNNEST($3::text[])",
+        source_id,
+        user_id,
+        &tags
+    )
+    .execute(db_pool)
+    .await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+pub async fn search_tags(
+    db_pool: &Pool,
+    user_id: i32,
+    query: &str,
+    limit: i32,
+) -> Result<Vec<String>> {
+    let query = format!("%{}%", query.to_lowercase());
+    let res = sqlx::query!(
+        "SELECT (array_agg(tag))[1:$3] as tags from source_tags WHERE user_id=$1 and tag ilike $2",
+        user_id,
+        query,
+        limit
+    )
+    .fetch_one(db_pool)
+    .await?;
+    Ok(res.tags.unwrap_or_default())
+}

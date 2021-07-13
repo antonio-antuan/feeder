@@ -25,6 +25,14 @@ service SourcesService {
     rpc MoveToFolder(MoveToFolderRequest) returns (MoveToFolderResponse) {
 
     }
+
+    rpc SearchTags(SearchTagsRequest) returns (SearchTagsResponse) {
+
+    }
+
+    rpc SetSourceTags(SetSourceTagsRequest) returns (SetSourceTagsResponse) {
+
+    }
 }
 
 message GetSourcesListRequest {
@@ -95,4 +103,23 @@ message GetSourceByIdRequest {
 
 message GetSourceByIdResponse {
     SourceWithMeta source = 1;
+}
+
+
+message SearchTagsRequest {
+    string search = 1;
+    int32 limit = 2;
+}
+
+message SearchTagsResponse {
+    repeated string tags = 1;
+}
+
+message SetSourceTagsRequest {
+    int32 source_id = 1;
+    repeated string tags = 2;
+}
+
+message SetSourceTagsResponse {
+
 }

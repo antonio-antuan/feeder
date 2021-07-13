@@ -1,10 +1,9 @@
 use super::pb::{adapt_source, sources};
 use crate::db::queries::sources as sources_queries;
 use crate::db::Pool;
-use crate::grpc::pb::sources::{MoveToFolderRequest, MoveToFolderResponse};
 use crate::init::App;
 use feeder::result::Error;
-use tonic::{Request, Response, Status};
+use tonic::{Code, Request, Response, Status};
 
 #[derive(Clone)]
 pub struct Service {
@@ -92,10 +91,10 @@ impl sources::sources_service_server::SourcesService for Service {
 
     async fn move_to_folder(
         &self,
-        request: Request<MoveToFolderRequest>,
-    ) -> Result<Response<MoveToFolderResponse>, Status> {
+        request: Request<sources::MoveToFolderRequest>,
+    ) -> Result<Response<sources::MoveToFolderResponse>, Status> {
         let user = super::auth_user(&self.db_pool, request.metadata()).await?;
-        let message: MoveToFolderRequest = request.into_inner();
+        let message: sources::MoveToFolderRequest = request.into_inner();
         sources_queries::move_to_folder(
             &self.db_pool,
             user.id,
@@ -104,5 +103,37 @@ impl sources::sources_service_server::SourcesService for Service {
         )
         .await?;
         Ok(tonic::Response::new(sources::MoveToFolderResponse {}))
+    }
+
+    async fn search_tags(
+        &self,
+        request: Request<sources::SearchTagsRequest>,
+    ) -> Result<Response<sources::SearchTagsResponse>, Status> {
+        let user = super::auth_user(&self.db_pool, request.metadata()).await?;
+        let message: sources::SearchTagsRequest = request.into_inner();
+        if message.search.trim() == "" {
+            return Err(Status::new(
+                Code::InvalidArgument,
+                "empty query not allowed",
+            ));
+        }
+        let tags = sources_queries::search_tags(
+            &self.db_pool,
+            user.id,
+            message.search.as_str(),
+            message.limit,
+        )
+        .await?;
+        Ok(tonic::Response::new(sources::SearchTagsResponse { tags }))
+    }
+
+    async fn set_source_tags(
+        &self,
+        request: Request<sources::SetSourceTagsRequest>,
+    ) -> Result<Response<sources::SetSourceTagsResponse>, Status> {
+        let user = super::auth_user(&self.db_pool, request.metadata()).await?;
+        let message: sources::SetSourceTagsRequest = request.into_inner();
+        sources_queries::set_tags(&self.db_pool, user.id, message.source_id, message.tags).await?;
+        Ok(tonic::Response::new(sources::SetSourceTagsResponse {}))
     }
 }
