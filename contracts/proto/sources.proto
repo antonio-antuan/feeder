@@ -6,6 +6,10 @@ service SourcesService {
 
     }
 
+    rpc GetSourceById(GetSourceByIdRequest) returns (GetSourceByIdResponse) {
+
+    }
+
     rpc SearchSources(SearchSourcesRequest) returns (SearchSourcesResponse) {
 
     }
@@ -83,4 +87,12 @@ message MoveToFolderRequest {
 
 message MoveToFolderResponse {
 
+}
+
+message GetSourceByIdRequest {
+    int32 id = 1;
+}
+
+message GetSourceByIdResponse {
+    SourceWithMeta source = 1;
 }

@@ -49,7 +49,7 @@ impl From<crate::db::models::SourceWithMeta> for sources::SourceWithMeta {
             kind: source.kind,
             image: source.image.unwrap_or_default(),
             last_scrape_time: source.last_scrape_time.timestamp(),
-            folder_id: source.folder_id,
+            folder_id: source.folder_id.unwrap_or(0),
         }
     }
 }

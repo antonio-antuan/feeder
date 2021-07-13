@@ -34,8 +34,8 @@ pub struct GetRecordsListRequest {
     pub limit: u32,
     #[prost(uint32, tag = "4")]
     pub offset: u32,
-    #[prost(enumeration = "RecordsQuery", tag = "5")]
-    pub query: i32,
+    #[prost(bool, tag = "5")]
+    pub only_starred: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetRecordsListResponse {
@@ -87,13 +87,6 @@ pub struct RemoveRecordTagRequest {
 pub struct RemoveRecordTagResponse {
     #[prost(string, repeated, tag = "1")]
     pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum RecordsQuery {
-    Undefined = 0,
-    All = 1,
-    Starred = 2,
 }
 #[doc = r" Generated client implementations."]
 pub mod records_service_client {

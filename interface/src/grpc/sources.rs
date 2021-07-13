@@ -23,6 +23,18 @@ impl Service {
 
 #[tonic::async_trait]
 impl sources::sources_service_server::SourcesService for Service {
+    async fn get_source_by_id(
+        &self,
+        request: tonic::Request<sources::GetSourceByIdRequest>,
+    ) -> Result<tonic::Response<sources::GetSourceByIdResponse>, tonic::Status> {
+        let user = super::auth_user(&self.db_pool, request.metadata()).await?;
+        let message = request.into_inner();
+        let source = sources_queries::get_by_id(&self.db_pool, user.id, message.id).await?;
+        Ok(tonic::Response::new(sources::GetSourceByIdResponse {
+            source: Some(source.into()),
+        }))
+    }
+
     async fn get_sources_list(
         &self,
         request: tonic::Request<sources::GetSourcesListRequest>,

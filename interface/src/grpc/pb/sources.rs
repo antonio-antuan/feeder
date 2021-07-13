@@ -74,6 +74,16 @@ pub struct MoveToFolderRequest {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MoveToFolderResponse {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSourceByIdRequest {
+    #[prost(int32, tag = "1")]
+    pub id: i32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetSourceByIdResponse {
+    #[prost(message, optional, tag = "1")]
+    pub source: ::core::option::Option<SourceWithMeta>,
+}
 #[doc = r" Generated client implementations."]
 pub mod sources_service_client {
     #![allow(unused_variables, dead_code, missing_docs)]
@@ -149,6 +159,21 @@ pub mod sources_service_client {
                 http::uri::PathAndQuery::from_static("/sources.SourcesService/GetSourcesList");
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn get_source_by_id(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetSourceByIdRequest>,
+        ) -> Result<tonic::Response<super::GetSourceByIdResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/sources.SourcesService/GetSourceById");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         pub async fn search_sources(
             &mut self,
             request: impl tonic::IntoRequest<super::SearchSourcesRequest>,
@@ -219,6 +244,10 @@ pub mod sources_service_server {
             &self,
             request: tonic::Request<super::GetSourcesListRequest>,
         ) -> Result<tonic::Response<super::GetSourcesListResponse>, tonic::Status>;
+        async fn get_source_by_id(
+            &self,
+            request: tonic::Request<super::GetSourceByIdRequest>,
+        ) -> Result<tonic::Response<super::GetSourceByIdResponse>, tonic::Status>;
         async fn search_sources(
             &self,
             request: tonic::Request<super::SearchSourcesRequest>,
@@ -299,6 +328,39 @@ pub mod sources_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = GetSourcesListSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/sources.SourcesService/GetSourceById" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetSourceByIdSvc<T: SourcesService>(pub Arc<T>);
+                    impl<T: SourcesService> tonic::server::UnaryService<super::GetSourceByIdRequest>
+                        for GetSourceByIdSvc<T>
+                    {
+                        type Response = super::GetSourceByIdResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetSourceByIdRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).get_source_by_id(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = GetSourceByIdSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec).apply_compression_config(
                             accept_compression_encodings,

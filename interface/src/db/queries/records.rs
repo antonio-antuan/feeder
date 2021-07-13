@@ -9,6 +9,7 @@ pub async fn get_records(
     user_id: i32,
     source_id: Option<i32>,
     record_id: Option<i32>,
+    only_starred: bool,
     limit: i64,
     offset: i64,
 ) -> Result<Vec<RecordWithMeta>> {
@@ -50,6 +51,10 @@ pub async fn get_records(
         query.and_where_eq("r.id", rid);
     }
 
+    if only_starred {
+        query.and_where("rus.starred");
+    }
+
     let query = query
         .sql()
         .map_err(|e| crate::result::Error::InternalServerError(e.to_string()))?;
@@ -76,11 +81,13 @@ pub async fn mark_record(
     .execute(db_pool)
     .await?;
 
-    Ok(get_records(db_pool, user_id, None, Some(record_id), 1, 0)
-        .await?
-        .first()
-        .cloned()
-        .unwrap())
+    Ok(
+        get_records(db_pool, user_id, None, Some(record_id), starred, 1, 0)
+            .await?
+            .first()
+            .cloned()
+            .unwrap(),
+    )
 }
 
 pub async fn get_tags(db_pool: &Pool, user_id: i32, record_id: i32) -> Result<Vec<String>> {

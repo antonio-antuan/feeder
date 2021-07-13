@@ -40,18 +40,12 @@ message RecordWithMeta {
     repeated string tags = 3;
 }
 
-enum RecordsQuery {
-    RECORDS_QUERY_UNDEFINED = 0;
-    RECORDS_QUERY_ALL = 1;
-    RECORDS_QUERY_STARRED = 2;
-}
-
 message GetRecordsListRequest {
     int32 source_id = 1;
     int32 record_id = 2;
     uint32 limit = 3;
     uint32 offset = 4;
-    RecordsQuery query = 5;
+    bool only_starred = 5;
 }
 
 message GetRecordsListResponse {

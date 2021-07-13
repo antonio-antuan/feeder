@@ -36,6 +36,7 @@ impl records::records_service_server::RecordsService for Service {
                 0 => None,
                 _ => Some(message.record_id),
             },
+            message.only_starred,
             message.limit.into(),
             message.offset.into(),
         )

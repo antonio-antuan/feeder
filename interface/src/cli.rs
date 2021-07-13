@@ -162,10 +162,11 @@ pub async fn run() {
                     .map(|v| v.parse().expect("invalid source id"))
                     .unwrap_or(0);
                 let pool = app.storage().pool();
-                let found =
-                    queries::records::get_records(&pool, user_id, source_id, None, limit, offset)
-                        .await
-                        .expect("can't get records");
+                let found = queries::records::get_records(
+                    &pool, user_id, source_id, None, false, limit, offset,
+                )
+                .await
+                .expect("can't get records");
                 println!("{:?}", found);
             }
 

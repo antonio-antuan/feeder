@@ -23,7 +23,7 @@ pub struct SourceWithMeta {
     pub image: Option<String>,
     pub last_scrape_time: NaiveDateTime,
     pub external_link: String,
-    pub folder_id: i32,
+    pub folder_id: Option<i32>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, Clone, Debug)]

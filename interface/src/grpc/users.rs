@@ -8,8 +8,6 @@ use crate::grpc::pb::users::{
 use std::convert::TryInto;
 use tonic::{Request, Response, Status};
 
-const BASE_FOLDER: &str = "BASE";
-
 #[derive(Clone)]
 pub struct Service {
     db_pool: Pool,
@@ -45,8 +43,6 @@ impl users::users_service_server::UsersService for Service {
         let user =
             users_queries::create_user(&self.db_pool, message.login.clone(), password).await?;
         log::info!("{:?}", user);
-        folders_queries::add_user_folder(&self.db_pool, user.id, BASE_FOLDER.to_string(), None)
-            .await?;
         Ok(tonic::Response::new(users::RegisterResponse {
             user: Some(user.try_into()?),
         }))
