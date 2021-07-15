@@ -42,10 +42,12 @@ impl users::users_service_server::UsersService for Service {
         let password = auth::hash(message.password.as_str());
         let user =
             users_queries::create_user(&self.db_pool, message.login.clone(), password).await?;
-        log::info!("{:?}", user);
-        Ok(tonic::Response::new(users::RegisterResponse {
-            user: Some(user.try_into()?),
-        }))
+        match user {
+            Some(user) => Ok(tonic::Response::new(users::RegisterResponse {
+                user: Some(user.try_into()?),
+            })),
+            None => Err(tonic::Status::already_exists("user already exists")),
+        }
     }
 
     async fn get_folders(

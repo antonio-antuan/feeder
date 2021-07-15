@@ -24,6 +24,7 @@ pub struct SourceWithMeta {
     pub last_scrape_time: NaiveDateTime,
     pub external_link: String,
     pub folder_id: Option<i32>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, Clone, Debug)]

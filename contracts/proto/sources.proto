@@ -40,14 +40,9 @@ message GetSourcesListRequest {
 }
 
 message SourceWithMeta {
-    int32 id = 1;
-    string name = 2;
-    string origin = 3;
-    string kind = 4;
-    string image = 5;
-    int64 last_scrape_time = 6;
-    string external_link = 7;
-    int32 folder_id = 8;
+    Source source = 1;
+    int32 folder_id = 2;
+    repeated string tags = 3;
 }
 
 message GetSourcesListResponse {

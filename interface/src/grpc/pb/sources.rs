@@ -2,22 +2,12 @@
 pub struct GetSourcesListRequest {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SourceWithMeta {
-    #[prost(int32, tag = "1")]
-    pub id: i32,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub origin: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub kind: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub image: ::prost::alloc::string::String,
-    #[prost(int64, tag = "6")]
-    pub last_scrape_time: i64,
-    #[prost(string, tag = "7")]
-    pub external_link: ::prost::alloc::string::String,
-    #[prost(int32, tag = "8")]
+    #[prost(message, optional, tag = "1")]
+    pub source: ::core::option::Option<Source>,
+    #[prost(int32, tag = "2")]
     pub folder_id: i32,
+    #[prost(string, repeated, tag = "3")]
+    pub tags: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetSourcesListResponse {

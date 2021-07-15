@@ -42,14 +42,17 @@ impl From<crate::db::models::RecordWithMeta> for records::RecordWithMeta {
 impl From<crate::db::models::SourceWithMeta> for sources::SourceWithMeta {
     fn from(source: crate::db::models::SourceWithMeta) -> Self {
         Self {
-            id: source.id,
-            external_link: source.external_link,
-            name: source.name,
-            origin: source.origin,
-            kind: source.kind,
-            image: source.image.unwrap_or_default(),
-            last_scrape_time: source.last_scrape_time.timestamp(),
+            source: Some(sources::Source {
+                id: source.id,
+                external_link: source.external_link,
+                name: source.name,
+                origin: source.origin,
+                kind: source.kind,
+                image: source.image.unwrap_or_default(),
+                last_scrape_time: source.last_scrape_time.timestamp(),
+            }),
             folder_id: source.folder_id.unwrap_or(0),
+            tags: source.tags.unwrap_or_default(),
         }
     }
 }

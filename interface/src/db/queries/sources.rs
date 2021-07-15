@@ -2,6 +2,7 @@ use crate::db::{models::SourceWithMeta, Pool};
 use crate::result::Result;
 
 pub async fn unsubscribe(db_pool: &Pool, source_id: i32, user_id: i32) -> Result<()> {
+    let mut tx = db_pool.begin().await?;
     sqlx::query!(
         r#"
     DELETE FROM records_user_settings 
@@ -10,9 +11,9 @@ pub async fn unsubscribe(db_pool: &Pool, source_id: i32, user_id: i32) -> Result
         AND user_id = $2
     "#,
         source_id,
-        user_id
+        user_id,
     )
-    .execute(db_pool)
+    .execute(&mut tx)
     .await?;
     sqlx::query!(
         r#"
@@ -23,7 +24,7 @@ pub async fn unsubscribe(db_pool: &Pool, source_id: i32, user_id: i32) -> Result
         source_id,
         user_id
     )
-    .execute(db_pool)
+    .execute(&mut tx)
     .await?;
     sqlx::query!(
         r#"
@@ -36,6 +37,7 @@ pub async fn unsubscribe(db_pool: &Pool, source_id: i32, user_id: i32) -> Result
     )
     .execute(db_pool)
     .await?;
+    tx.commit().await?;
     Ok(())
 }
 
@@ -54,11 +56,14 @@ pub async fn get_by_id(db_pool: &Pool, user_id: i32, source_id: i32) -> Result<S
     let source = sqlx::query_as!(
         SourceWithMeta,
         r#"SELECT 
-        s.id, s.name, s.origin, s.kind, s.image, s.last_scrape_time, s.external_link, usf.folder_id as "folder_id?" 
+        s.id, s.name, s.origin, s.kind, s.image, s.last_scrape_time, s.external_link, usf.folder_id as "folder_id?",
+        array_agg(st.tag) filter(where st.tag is not null) as tags 
         FROM sources s
         INNER JOIN sources_user_settings sus ON sus.source_id = s.id
         LEFT JOIN user_source_to_folder usf ON usf.user_source_id = sus.id
-        WHERE sus.user_id = $1 AND s.id = $2 
+        LEFT JOIN source_tags st ON st.source_id = s.id AND st.user_id = sus.user_id
+        WHERE sus.user_id = $1 AND s.id = $2
+        GROUP BY s.id, usf.folder_id
         "#,
         user_id, source_id
     )
@@ -71,11 +76,14 @@ pub async fn get_for_user(db_pool: &Pool, user_id: i32) -> Result<Vec<SourceWith
     let sources = sqlx::query_as!(
         SourceWithMeta,
         r#"SELECT 
-        s.id, s.name, s.origin, s.kind, s.image, s.last_scrape_time, s.external_link, usf.folder_id as "folder_id?" 
+        s.id, s.name, s.origin, s.kind, s.image, s.last_scrape_time, s.external_link, usf.folder_id as "folder_id?",
+        array_agg(st.tag) filter(where st.tag is not null) as tags 
         FROM sources s
         INNER JOIN sources_user_settings sus ON sus.source_id = s.id
         LEFT JOIN user_source_to_folder usf ON usf.user_source_id = sus.id
-        WHERE sus.user_id = $1 
+        LEFT JOIN source_tags st ON st.source_id = s.id AND st.user_id = sus.user_id
+        WHERE sus.user_id = $1
+        GROUP BY s.id, usf.folder_id
         "#,
         user_id
     )
@@ -90,6 +98,19 @@ pub async fn move_to_folder(
     source_id: i32,
     folder_id: i32,
 ) -> Result<()> {
+    if folder_id == 0 {
+        sqlx::query!(
+            r#"
+        DELETE FROM user_source_to_folder 
+        WHERE user_source_id = (SELECT id FROM sources_user_settings 
+                                WHERE source_id = $1 AND user_id = $2 LIMIT 1)"#,
+            source_id,
+            user_id
+        )
+        .execute(db_pool)
+        .await?;
+        return Ok(());
+    }
     sqlx::query!(
         r#"
     INSERT INTO user_source_to_folder (user_source_id, folder_id) 
@@ -128,7 +149,7 @@ pub async fn set_tags(
         user_id,
         &tags
     )
-    .execute(db_pool)
+    .execute(&mut tx)
     .await?;
     tx.commit().await?;
     Ok(())
