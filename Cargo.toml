@@ -6,5 +6,5 @@ members = [
     "tg-collector",
     "vk-collector",
     "interface",
-    "contracts"
+    "contracts",
 ]

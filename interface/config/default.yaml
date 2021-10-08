@@ -1,0 +1,29 @@
+database:
+  url: postgresql://feeder:feeder@0.0.0.0:5433/feeder
+
+collectors:
+  http:
+    enabled: true
+    sleep_secs: 60
+    scrape_source_secs_interval: 60
+  vk:
+    enabled: false
+    sleep_secs: 60
+    scrape_source_secs_interval: 60
+    token: dummy
+  tg:
+    enabled: false
+    database_directory: tdlib
+    log_verbosity_level: 1
+    encryption_key: ""
+    api_id: 0
+    api_hash: dummy
+    phone: dummy
+    max_download_queue_size: 1
+    files_directory: files
+    log_download_state_secs_interval: 10
+
+server:
+  host: 0.0.0.0
+  port: 8089
+  enabled: false

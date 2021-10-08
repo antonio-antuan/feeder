@@ -162,7 +162,7 @@ impl Storage for PgStorage {
         check_secs_interval: u64,
     ) -> Result<Vec<models::Source>> {
         Ok(sqlx::query_as(
-            "SELECT * FROM sources WHERE kind = $1 AND (last_scrape_time < NOW() - $1)",
+            "SELECT * FROM sources WHERE kind = $1 AND (last_scrape_time < NOW() - $2::interval)",
         )
         .bind(kind)
         .bind(Duration::from_secs(check_secs_interval))

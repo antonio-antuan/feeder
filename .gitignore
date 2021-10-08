@@ -3,4 +3,4 @@ Cargo.lock
 **/**/tdlib
 target
 docker-compose.yaml
-config
+config/local*

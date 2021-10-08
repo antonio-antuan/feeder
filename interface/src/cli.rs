@@ -297,6 +297,10 @@ pub async fn run() {
                 .await
                 .expect("can't synchronize")
         }
+        ("", _) => {
+            eprintln!("subcommand not specified");
+            exit(1)
+        }
         _ => panic!("unexpected command: {:?}", matches.subcommand_name()),
     }
 }
